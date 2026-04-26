@@ -3,8 +3,6 @@ import { Hind_Siliguri } from "next/font/google";
 import "@/styles/globals.css";
 
 import { Providers } from "@/components/providers/Providers";
-
-import { auth } from "@/auth";
 import { ToastProvider } from "@/components/ui/toast-provider";
 
 const hindSiliguri = Hind_Siliguri({
@@ -142,13 +140,11 @@ export const viewport: Viewport = {
   userScalable: true,
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
-
   return (
     <html
       lang="en"
@@ -156,7 +152,7 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
-        <Providers session={session}>
+        <Providers session={null}>
           {children}
           <ToastProvider />
         </Providers>
