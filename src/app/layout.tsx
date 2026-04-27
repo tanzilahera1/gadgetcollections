@@ -152,7 +152,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
-        <Providers session={null}>
+        <Providers >
           {children}
           <ToastProvider />
         </Providers>

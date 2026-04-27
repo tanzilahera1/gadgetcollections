@@ -18,7 +18,7 @@ import { signIn } from "next-auth/react";
 
 const loginSchema = z.object({
   email: z.string().email("সঠিক ইমেইল অ্যাড্রেস দিন"),
-  password: z.string().min(1, "পাসওয়ার্ড দিন"),
+  password: z.string().min(6, "পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে"),
   // ✅ FIX: .default() বাদ দিয়ে সরাসরি boolean করা
   rememberMe: z.boolean(),
 });

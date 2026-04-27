@@ -27,6 +27,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function UserMenuButton() {
   const { data: session, status } = useSession();
+ 
 
   if (status === "loading") {
     return <div className="size-9 rounded-full bg-slate-100 animate-pulse" />;

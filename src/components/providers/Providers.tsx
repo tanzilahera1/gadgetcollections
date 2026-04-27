@@ -1,17 +1,16 @@
-// src\components\providers\Providers.tsx
-'use client'
+"use client";
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { SessionProvider } from 'next-auth/react'
-import { useState, ReactNode } from 'react'
-import { Session } from 'next-auth'
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { SessionProvider } from "next-auth/react";
+import { useState, ReactNode } from "react";
+import type { Session } from "next-auth";
 
 export function Providers({
   children,
-  session
+  session,
 }: {
-  children: ReactNode
-  session: Session | null
+  children: ReactNode;
+  session?: Session | null;
 }) {
   const [queryClient] = useState(
     () =>
@@ -22,7 +21,7 @@ export function Providers({
           },
         },
       })
-  )
+  );
 
   return (
     <SessionProvider session={session}>
@@ -30,5 +29,5 @@ export function Providers({
         {children}
       </QueryClientProvider>
     </SessionProvider>
-  )
+  );
 }
