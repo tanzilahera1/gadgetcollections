@@ -227,7 +227,7 @@ export default function NavbarClient() {
 
             <CartButton />
             <UserMenuButton />
-
+ 
             <Button
               variant="ghost"
               size="icon"

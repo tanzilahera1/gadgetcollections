@@ -31,7 +31,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const parsed = z
           .object({
             email: z.string().email(),
-            password: z.string().min(6),
+            password: z.string().min(8),
           })
           .safeParse(credentials);
 
@@ -109,9 +109,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   events: {
     // ✅ ফিক্স 2: isNewUser চেক বাদ। সবসময় মার্জ করো
-    async signIn({ user, account }) {
-      const { mergeGuestCartToUser } = await import("@/actions/cart");
-      await mergeGuestCartToUser();
+    async signIn({ user }) {
+      if (user?.id) {
+        const { mergeGuestCartToUser } = await import("@/actions/cart");
+        await mergeGuestCartToUser(user.id);
+      }
     },
   },
   pages: {

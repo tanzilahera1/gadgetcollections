@@ -9,7 +9,7 @@ export function useCart() {
   const { data: cartCount = 0, isLoading: isLoadingCount } = useQuery({
     queryKey: ['cart-count'],
     queryFn: async () => {
-      const res = await fetch('/api/cart/count')
+      const res = await fetch('/api/cart/count', { cache: 'no-store' })
       const data = await res.json()
       return data.count as number
     }
@@ -19,7 +19,7 @@ export function useCart() {
   const { data: cartData = { items: [], total: 0 }, isLoading: isLoadingCart } = useQuery({
     queryKey: ['cart-details'],
     queryFn: async () => {
-      const res = await fetch('/api/cart')
+      const res = await fetch('/api/cart', { cache: 'no-store' })
       return await res.json()
     }
   })

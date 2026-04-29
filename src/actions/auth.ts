@@ -4,8 +4,7 @@ import { z } from "zod";
 import { dbConnect } from "@/lib/db";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
-import { signIn, signOut } from "@/auth";
-import { AuthError } from "next-auth";
+import { signOut } from "@/auth";
 
 const RegisterSchema = z.object({
   fullName: z.string().min(3, "Name must be at least 3 characters"),
@@ -24,49 +23,29 @@ export async function signUp(formData: z.infer<typeof RegisterSchema>) {
 
     await dbConnect();
 
-    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return { error: "User already exists with this email" };
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create user
     const newUser = new User({
       fullName,
       email,
       password: hashedPassword,
-      role: "user", // Default role
+      role: "user",
     });
 
     await newUser.save();
 
-    return { success: true, message: "Registration successful! You can now login." };
+    return {
+      success: true,
+      message: "Registration successful! You can now login.",
+    };
   } catch (error) {
     console.error("Registration error:", error);
     return { error: "Internal server error. Please try again." };
-  }
-}
-
-export async function login(formData: any) {
-  try {
-    await signIn("credentials", {
-      email: formData.email,
-      password: formData.password,
-      redirectTo: formData.callbackUrl || "/dashboard",
-    });
-  } catch (error) {
-    if (error instanceof AuthError) {
-      switch (error.type) {
-        case "CredentialsSignin":
-          return { error: "Invalid credentials." };
-        default:
-          return { error: "Something went wrong." };
-      }
-    }
-    throw error;
   }
 }
 

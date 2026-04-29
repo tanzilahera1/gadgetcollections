@@ -1,26 +1,31 @@
-'use server'
+"use server";
 
-import { z } from 'zod'
-import { sendTelegramMessage } from '@/lib/telegram'
+import { sendDiscordContactMessage } from "@/lib/discord";
 
-const ContactSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  message: z.string().min(10)
-})
+export async function submitContactForm(formData: FormData) {
+  try {
+    const name = formData.get("name") as string;
+    const phone = formData.get("phone") as string;
+    const email = formData.get("email") as string;
+    const subject = formData.get("subject") as string;
+    const message = formData.get("message") as string;
 
-export async function sendContactMessage(formData: FormData) {
-  const validated = ContactSchema.safeParse({
-    name: formData.get('name'),
-    email: formData.get('email'),
-    message: formData.get('message')
-  })
+    if (!name || !phone || !subject || !message) {
+      return { success: false, error: "Please fill out all required fields." };
+    }
 
-  if (!validated.success) return { error: 'Invalid data', details: validated.error.flatten() }
+    // Send it asynchronously via webhook integration
+    await sendDiscordContactMessage({
+      name,
+      phone,
+      email,
+      subject,
+      message,
+    });
 
-  const text = `✉️ <b>New Contact Message</b>\n\n<b>Name:</b> ${validated.data.name}\n<b>Email:</b> ${validated.data.email}\n<b>Message:</b>\n${validated.data.message}`
-
-  await sendTelegramMessage(text)
-
-  return { success: true }
+    return { success: true };
+  } catch (error) {
+    console.error("Contact Form Submission Error:", error);
+    return { success: false, error: "Something went wrong. Please try again later." };
+  }
 }

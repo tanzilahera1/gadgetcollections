@@ -3,10 +3,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ShoppingCart, Star, Minus, Plus, Loader2 } from "lucide-react";
+import { ShoppingCart, Star, Minus, Plus, Loader2, Heart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { formatPrice, calculateDiscount } from "@/lib/priceUtils";
 import { useCart } from "@/hooks/useCart";
+import { useWishlist } from "@/hooks/useWishlist";
 import { toast } from "sonner";
 
 // Type Imports
@@ -24,6 +26,8 @@ export default function ProductCard({ product }: { product: IProduct }) {
     isUpdating,
     isRemoving, 
   } = useCart();
+
+  const { wishlistIds, toggleWishlist } = useWishlist();
 
   // Price calculations
   const discountPercentage = calculateDiscount(
@@ -70,10 +74,12 @@ export default function ProductCard({ product }: { product: IProduct }) {
     addToCart(
       { productId: String(product._id), quantity: 1 },
       {
-        onSuccess: () => {
-          toast.success(`${product.title} কার্টে যোগ করা হয়েছে!`, {
-            icon: <ShoppingCart className="size-4" />,
-          });
+        onSuccess: (data: { success?: boolean }) => {
+          if (data.success) {
+             toast.success(`${product.title} কার্টে যোগ করা হয়েছে!`, {
+               icon: <ShoppingCart className="size-4" />,
+             });
+          }
         },
       },
     );
@@ -133,15 +139,20 @@ export default function ProductCard({ product }: { product: IProduct }) {
         )}
 
         {/* Wishlist Button */}
-        {/* <button
+        <button
           onClick={(e) => {
             e.preventDefault();
-            toast.success("Wishlist এ যোগ করা হয়েছে!");
+            toggleWishlist({ productId: String(product._id) });
           }}
-          className="absolute right-3 top-3 z-10 flex size-8 items-center justify-center rounded-full bg-background/50 text-foreground/70 transition-colors hover:text-destructive"
+          className={cn(
+            "absolute right-3 top-3 z-10 flex size-8 items-center justify-center rounded-full bg-background/80 backdrop-blur-md transition-all duration-300 shadow-sm active:scale-90",
+            wishlistIds.includes(String(product._id))
+              ? "text-rose-500 scale-105 shadow-rose-500/20" 
+              : "text-foreground/70 hover:text-rose-500 hover:scale-105"
+          )}
         >
-          <Heart className="size-4" />
-        </button> */}
+          <Heart className={cn("size-4 transition-all duration-300", wishlistIds.includes(String(product._id)) && "fill-rose-500")} />
+        </button>
 
         {/* Out of Stock Overlay */}
         {product.stockQuantity === 0 && (

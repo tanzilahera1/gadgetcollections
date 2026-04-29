@@ -1,51 +1,47 @@
-// src/components/auth/LoginForm.tsx
 "use client";
 
-import { useState, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useForm } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { login } from "@/actions/auth";
 import { toast } from "sonner";
 import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { signIn } from "next-auth/react";
+import type { ILoginInput } from "@/types/auth";
+
+const REMEMBERED_EMAIL_KEY = "gc.remembered-email";
 
 const loginSchema = z.object({
   email: z.string().email("সঠিক ইমেইল অ্যাড্রেস দিন"),
-  password: z.string().min(6, "পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে"),
-  // ✅ FIX: .default() বাদ দিয়ে সরাসরি boolean করা
+  password: z.string().min(8, "পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে"),
   rememberMe: z.boolean(),
 });
-
-// ✅ Schema থেকে type নয়, manually define করা — mismatch এড়াতে
-type LoginInput = {
-  email: string;
-  password: string;
-  rememberMe: boolean;
-};
 
 function LoginFormInner() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
+
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
 
-  // ✅ FIX: LoginInput explicitly দেওয়া এবং defaultValues এ সব field দেওয়া
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
-  } = useForm<LoginInput>({
-    // ✅ FIX: zodResolver এর generic explicitly set
+  } = useForm<ILoginInput>({
     resolver: zodResolver(
       loginSchema,
-    ) as import("react-hook-form").Resolver<LoginInput>,
+    ) as import("react-hook-form").Resolver<ILoginInput>,
     defaultValues: {
       email: "",
       password: "",
@@ -53,20 +49,52 @@ function LoginFormInner() {
     },
   });
 
-  // ✅ FIX: SubmitHandler type ব্যবহার
-  const onSubmit: import("react-hook-form").SubmitHandler<LoginInput> = async (
+  useEffect(() => {
+    const rememberedEmail = window.localStorage.getItem(REMEMBERED_EMAIL_KEY);
+    if (rememberedEmail) {
+      setValue("email", rememberedEmail);
+      setValue("rememberMe", true);
+    }
+  }, [setValue]);
+
+  const onSubmit: import("react-hook-form").SubmitHandler<ILoginInput> = async (
     data,
   ) => {
     setIsLoading(true);
+
     try {
-      const result = await login({ ...data, callbackUrl });
+      const result = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+        callbackUrl,
+      });
+
       if (result?.error) {
-        toast.error(result.error);
-      } else {
-        toast.success("লগিন সফল হয়েছে!");
+        toast.error("ইমেইল বা পাসওয়ার্ড সঠিক নয়");
+        return;
       }
+
+      if (data.rememberMe) {
+        window.localStorage.setItem(REMEMBERED_EMAIL_KEY, data.email);
+      } else {
+        window.localStorage.removeItem(REMEMBERED_EMAIL_KEY);
+      }
+
+      // Delay to allow the background NextAuth event to finish merging the cart
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["cart-count"] }),
+        queryClient.invalidateQueries({ queryKey: ["cart-details"] }),
+      ]);
+
+      toast.success("লগিন সফল হয়েছে!");
+
+      router.replace(result?.url || callbackUrl);
+      router.refresh();
     } catch {
-      // next-auth redirects on success
+      toast.error("লগিন করতে সমস্যা হয়েছে");
     } finally {
       setIsLoading(false);
     }
@@ -92,7 +120,6 @@ function LoginFormInner() {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            {/* Email */}
             <div className="space-y-1.5">
               <div className="relative group/field">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/field:text-primary transition-colors">
@@ -115,7 +142,6 @@ function LoginFormInner() {
               )}
             </div>
 
-            {/* Password */}
             <div className="space-y-1.5">
               <div className="relative group/field">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/field:text-primary transition-colors">
@@ -221,7 +247,6 @@ function LoginFormInner() {
   );
 }
 
-// ✅ Export এ Suspense wrap
 export function LoginForm() {
   return (
     <Suspense

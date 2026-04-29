@@ -87,30 +87,33 @@ export default function HeroSection({ featuredProducts }: HeroSectionProps) {
   const Card = ({ product }: { product: IProduct }) => {
     const discount = calculateDiscount(product.regularPrice, product.salePrice);
     return (
-      <Link
+      <div
         key={product._id.toString()}
-        href={getProductUrl(product)}
-        className="flex-[0_0_70%] sm:flex-[0_0_45%] md:flex-[0_0_33.333%] lg:flex-[0_0_25%] min-w-0 pl-2 md:pl-4"
+        className="group relative flex-[0_0_70%] sm:flex-[0_0_45%] md:flex-[0_0_33.333%] lg:flex-[0_0_25%] min-w-0 pl-2 md:pl-4"
       >
-        <div className="relative aspect-4/3 w-full overflow-hidden rounded-lg border border-border/30 shadow-sm hover:shadow-md transition-shadow">
-          <Image
-            src={product.thumbnail}
-            alt={product.title}
-            fill
-            className="object-cover hover:scale-105 transition-transform duration-500"
-          />
+        <div className="relative aspect-4/3 w-full overflow-hidden rounded-lg border border-border/30 shadow-sm transition-shadow">
+          <Link href={getProductUrl(product)} className="absolute inset-0 z-0 block">
+            <Image
+              src={product.thumbnail}
+              alt={product.title}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+          </Link>
           <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
           {discount > 0 && (
             <div className="absolute top-1.5 left-1.5 bg-red-600 text-white text- md:text-xs font-bold px-1.5 py-0.5 rounded">
               -{discount}%
             </div>
           )}
-          <div className="absolute inset-0 p-2 flex flex-col justify-end">
-            <div className="flex items-end justify-between gap-1.5">
+          <div className="absolute inset-0 p-2 flex flex-col justify-end pointer-events-none">
+            <div className="flex items-end justify-between gap-1.5 pointer-events-auto">
               <div className="flex flex-col flex-1 min-w-0">
-                <h3 className="hidden md:block text-xs lg:text-sm font-medium text-white leading-tight truncate">
-                  {product.title}
-                </h3>
+                <Link href={getProductUrl(product)}>
+                  <h3 className="hidden md:block text-xs lg:text-sm font-medium text-white leading-tight truncate hover:underline">
+                    {product.title}
+                  </h3>
+                </Link>
                 <div className="flex items-baseline gap-1 mt-0.5">
                   <p className="text- md:text-sm font-bold text-white whitespace-nowrap">
                     {formatPrice(product.salePrice || product.regularPrice)}
@@ -131,7 +134,11 @@ export default function HeroSection({ featuredProducts }: HeroSectionProps) {
                       quantity: 1,
                     },
                     {
-                      onSuccess: () => toast.success("কার্টে যোগ হয়েছে!"),
+                      onSuccess: (data: { success?: boolean }) => {
+                        if (data?.success) {
+                          toast.success("কার্টে যোগ হয়েছে!");
+                        }
+                      },
                     },
                   );
                 }}
@@ -146,7 +153,7 @@ export default function HeroSection({ featuredProducts }: HeroSectionProps) {
             </div>
           </div>
         </div>
-      </Link>
+      </div>
     );
   };
 

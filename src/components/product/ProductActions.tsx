@@ -28,19 +28,35 @@ export function ProductActions({ productId, stock }: ProductActionsProps) {
   const isDisabled = isAdding || stock <= 0;
 
   const handleAddToCart = () => {
-    addToCart({ productId, quantity: qty });
-    toast.success("Added to cart 🛒", {
-      description: "Item added successfully.",
-      action: {
-        label: "Checkout",
-        onClick: () => router.push("/checkout"),
-      },
-    });
+    addToCart(
+      { productId, quantity: qty },
+      {
+        onSuccess: (data: { success?: boolean }) => {
+          if (data?.success) {
+            toast.success("Added to cart 🛒", {
+              description: "Item added successfully.",
+              action: {
+                label: "Checkout",
+                onClick: () => router.push("/checkout"),
+              },
+            });
+          }
+        }
+      }
+    );
   };
 
   const handleBuyNow = () => {
-    addToCart({ productId, quantity: qty });
-    router.push("/checkout");
+    addToCart(
+      { productId, quantity: qty },
+      {
+        onSuccess: (data: { success?: boolean }) => {
+          if (data?.success) {
+            router.push("/checkout");
+          }
+        }
+      }
+    );
   };
 
   return (

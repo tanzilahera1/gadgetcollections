@@ -56,19 +56,19 @@ export async function addToCart(formData: FormData) {
     itemQuantity: Number(formData.get('itemQuantity') || 1)
   })
 
-  if (!validated.success) return { error: 'Invalid data', details: validated.error.flatten() }
+  if (!validated.success) return { success: false, error: 'Invalid data', details: validated.error.flatten() }
 
   const { productId, variantId, itemQuantity } = validated.data
   
   // 1. Verify product exists and is in stock
   await dbConnect()
   const product = await Product.findById(productId)
-  if (!product || product.status !== 'published') return { error: 'Product not found' }
-  if (product.stockQuantity < itemQuantity) return { error: 'Not enough stock' }
+  if (!product || product.status !== 'published') return { success: false, error: 'Product not found or unavailable' }
+  if (product.stockQuantity < itemQuantity) return { success: false, error: 'দুঃখিত! প্রোডাক্টটি এইমাত্র স্টক আউট হয়ে গেছে।' }
 
   // 2. Get or create cart
   const cart = await getCart()
-  if (!cart) return { error: 'Could not manage cart' }
+  if (!cart) return { success: false, error: 'Could not manage cart' }
 
   const existingItemIndex = cart.items.findIndex(
     (item: ICartItem) => item.product.toString() === productId && item.variant?.toString() === variantId
@@ -76,7 +76,7 @@ export async function addToCart(formData: FormData) {
 
   if (existingItemIndex > -1) {
     const newQty = cart.items[existingItemIndex].itemQuantity + itemQuantity
-    if (product.stockQuantity < newQty) return { error: 'Maximum stock limit reached' }
+    if (product.stockQuantity < newQty) return { success: false, error: 'সর্বোচ্চ স্টক লিমিট পার হয়েছে!' }
     cart.items[existingItemIndex].itemQuantity = newQty
   } else {
     cart.items.push({ product: productId, variant: variantId, itemQuantity, addedAt: new Date() })
@@ -93,10 +93,10 @@ export async function updateQty(formData: FormData) {
     itemQuantity: Number(formData.get('itemQuantity'))
   })
 
-  if (!validated.success) return { error: 'Invalid data' }
+  if (!validated.success) return { success: false, error: 'Invalid data' }
 
   const cart = await getCart()
-  if (!cart) return { error: 'Could not find cart' }
+  if (!cart) return { success: false, error: 'Could not find cart' }
 
   const { productId, variantId, itemQuantity } = validated.data
   const existingItemIndex = cart.items.findIndex(
@@ -131,9 +131,14 @@ export async function removeFromCart(formData: FormData) {
 }
 
 // --- Auth Merge Logic ---
-export async function mergeGuestCartToUser() {
-  const session = await auth()
-  if (!session?.user?.id) return { success: false }
+export async function mergeGuestCartToUser(userId?: string) {
+  let finalUserId = userId;
+  if (!finalUserId) {
+    const session = await auth()
+    finalUserId = session?.user?.id;
+  }
+  
+  if (!finalUserId) return { success: false, error: 'User ID missing' }
 
   await dbConnect()
   const cookieStore = await cookies()
@@ -142,16 +147,18 @@ export async function mergeGuestCartToUser() {
 
   const [guestCart, userCart] = await Promise.all([
     Cart.findOne({ sessionId: guestSessionId }),
-    Cart.findOne({ user: session.user.id })
+    Cart.findOne({ user: finalUserId })
   ])
 
   if (!guestCart || guestCart.items.length === 0) return { success: true }
 
   if (!userCart) {
-    guestCart.user = session.user.id
+    guestCart.user = finalUserId
     guestCart.sessionId = undefined
-    await guestCart.save()
-    cookieStore.delete('cart_session_id')
+    try {
+      await guestCart.save()
+      cookieStore.delete('cart_session_id')
+    } catch {}
     return { success: true }
   }
 
@@ -175,6 +182,8 @@ export async function mergeGuestCartToUser() {
 
   await userCart.save()
   await Cart.deleteOne({ _id: guestCart._id })
-  cookieStore.delete('cart_session_id')
+  try {
+    cookieStore.delete('cart_session_id')
+  } catch {}
   return { success: true }
 }

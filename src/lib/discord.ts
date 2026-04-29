@@ -1,9 +1,9 @@
 // src\lib\discord.ts
 
-import type { Types } from 'mongoose'
-import type { IOrder } from '@/types/order'
+import type { Types } from "mongoose";
+import type { IOrder } from "@/types/order";
 
-type OrderForDiscord = Omit<IOrder, '_id'> & { _id: Types.ObjectId }
+type OrderForDiscord = Omit<IOrder, "_id"> & { _id: Types.ObjectId };
 
 export async function sendDiscordOrder(orderData: OrderForDiscord) {
   const webhookUrl = process.env.DISCORD_ORDER_WEBHOOK;
@@ -79,5 +79,40 @@ export async function sendDiscordError(context: string, errorObj?: unknown) {
     });
   } catch (error) {
     console.error("Discord Error Webhook Failed:", error);
+  }
+}
+
+export async function sendDiscordContactMessage(data: {
+  name: string;
+  email?: string;
+  phone: string;
+  subject: string;
+  message: string;
+}) {
+  const webhookUrl = process.env.DISCORD_CONTACT_WEBHOOK;
+  if (!webhookUrl) return;
+
+  try {
+    const embeds = [
+      {
+        title: `📩 New Contact Message: ${data.subject}`,
+        color: 3447003, // Blue
+        fields: [
+          { name: "Name", value: data.name, inline: true },
+          { name: "Phone", value: data.phone, inline: true },
+          { name: "Email", value: data.email || "N/A", inline: true },
+          { name: "Message", value: data.message, inline: false },
+        ],
+        timestamp: new Date().toISOString(),
+      },
+    ];
+
+    await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ embeds }),
+    });
+  } catch (error) {
+    console.error("Discord Contact Webhook Error:", error);
   }
 }

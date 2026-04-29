@@ -8,6 +8,8 @@ import { cookies } from 'next/headers'
 import type { ICart, IPopulatedCartItem } from '@/types/cart'
 import type { IProduct } from '@/types/product'
 
+export const dynamic = 'force-dynamic';
+
 // Populate এর পর items এর টাইপ
 type PopulatedCart = Omit<ICart, 'items'> & {
   items: Array<{

@@ -6,6 +6,8 @@ import Cart from "@/models/Cart";
 import { cookies } from "next/headers";
 import type { ICart } from "@/types/cart";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     await dbConnect();

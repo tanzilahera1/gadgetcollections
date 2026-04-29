@@ -3,17 +3,14 @@ import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 
 export default auth((req) => {
-  /*
   const { nextUrl } = req;
   const session = req.auth;
   const isLoggedIn = !!session?.user;
   const userRole = session?.user?.role;
   const { pathname } = nextUrl;
-  */
 
-  const res = NextResponse.next(); 
+  const res = NextResponse.next();
 
-  /*
   // 1. Guest cart_session_id - সব পেজে সেট হবে যদি লগিন না থাকে
   if (!req.cookies.get("cart_session_id") && !isLoggedIn) {
     res.cookies.set("cart_session_id", uuidv4(), {
@@ -23,7 +20,7 @@ export default auth((req) => {
       path: "/",
     });
   }
- 
+
   // 2. /dashboard - লগিন লাগবে
   if (pathname.startsWith("/dashboard")) {
     if (!isLoggedIn) {
@@ -35,7 +32,7 @@ export default auth((req) => {
         ),
       );
     }
-    return res; 
+    return res;
   }
 
   // 3. /admin - লগিন + admin রোল লাগবে
@@ -48,7 +45,6 @@ export default auth((req) => {
     }
     return res;
   }
-  */
 
   return res;
 });
