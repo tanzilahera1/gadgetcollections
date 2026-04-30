@@ -24,7 +24,7 @@ export default function ProductCard({ product }: { product: IProduct }) {
     removeItem,
     isAdding,
     isUpdating,
-    isRemoving, 
+    isRemoving,
   } = useCart();
 
   const { wishlistIds, toggleWishlist } = useWishlist();
@@ -76,9 +76,9 @@ export default function ProductCard({ product }: { product: IProduct }) {
       {
         onSuccess: (data: { success?: boolean }) => {
           if (data.success) {
-             toast.success(`${product.title} কার্টে যোগ করা হয়েছে!`, {
-               icon: <ShoppingCart className="size-4" />,
-             });
+            toast.success(`${product.title} কার্টে যোগ করা হয়েছে!`, {
+              icon: <ShoppingCart className="size-4" />,
+            });
           }
         },
       },
@@ -117,7 +117,7 @@ export default function ProductCard({ product }: { product: IProduct }) {
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-xl  bg-card glass-border transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
       {/* 1. Image Container */}
-      <div className="relative aspect-4/3 w-full overflow-hidden bg-muted/20 rounded-t-xl">
+      <div className="relative aspect-square w-full overflow-hidden bg-muted/20 rounded-t-xl">
         <Link href={productHref} className="absolute inset-0 z-0 block">
           <Image
             src={product.thumbnail}
@@ -147,11 +147,16 @@ export default function ProductCard({ product }: { product: IProduct }) {
           className={cn(
             "absolute right-3 top-3 z-10 flex size-8 items-center justify-center rounded-full bg-background/80 backdrop-blur-md transition-all duration-300 shadow-sm active:scale-90",
             wishlistIds.includes(String(product._id))
-              ? "text-rose-500 scale-105 shadow-rose-500/20" 
-              : "text-foreground/70 hover:text-rose-500 hover:scale-105"
+              ? "text-rose-500 scale-105 shadow-rose-500/20"
+              : "text-foreground/70 hover:text-rose-500 hover:scale-105",
           )}
         >
-          <Heart className={cn("size-4 transition-all duration-300", wishlistIds.includes(String(product._id)) && "fill-rose-500")} />
+          <Heart
+            className={cn(
+              "size-4 transition-all duration-300",
+              wishlistIds.includes(String(product._id)) && "fill-rose-500",
+            )}
+          />
         </button>
 
         {/* Out of Stock Overlay */}
@@ -257,4 +262,3 @@ export default function ProductCard({ product }: { product: IProduct }) {
     </article>
   );
 }
- 

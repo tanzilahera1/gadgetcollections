@@ -9,10 +9,11 @@ import { IUser } from "@/types/user";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import mongoose from "mongoose";
- 
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: MongoDBAdapter(clientPromise),
   session: { strategy: "jwt" },
+
   // @ts-expect-error - Auth.js v5 এ টাইপ নাই কিন্তু রানটাইমে কাজ করে
   allowDangerousEmailAccountLinking: true,
   providers: [

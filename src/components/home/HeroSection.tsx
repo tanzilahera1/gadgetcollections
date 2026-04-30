@@ -91,7 +91,7 @@ export default function HeroSection({ featuredProducts }: HeroSectionProps) {
         key={product._id.toString()}
         className="group relative flex-[0_0_70%] sm:flex-[0_0_45%] md:flex-[0_0_33.333%] lg:flex-[0_0_25%] min-w-0 pl-2 md:pl-4"
       >
-        <div className="relative aspect-4/3 w-full overflow-hidden rounded-lg border border-border/30 shadow-sm transition-shadow">
+        <div className="relative aspect-square w-full overflow-hidden rounded-lg border border-border/30 shadow-sm transition-shadow">
           <Link href={getProductUrl(product)} className="absolute inset-0 z-0 block">
             <Image
               src={product.thumbnail}

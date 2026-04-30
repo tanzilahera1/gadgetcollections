@@ -28,7 +28,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function UserMenuButton() {
   const { data: session, status } = useSession();
-  console.log(`session: ${JSON.stringify(session)}`);
 
   if (status === "loading") {
     return <div className="size-9 rounded-full bg-slate-100 animate-pulse" />;
@@ -118,7 +117,7 @@ export default function UserMenuButton() {
               <Link
                 href="/admin"
                 className="rounded-xl flex items-center gap-3 p-3.5 cursor-pointer hover:bg-primary/5 text-slate-700 hover:text-primary transition-all group"
-              > 
+              >
                 <div className="size-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 transition-colors group-hover:bg-primary/20 group-hover:text-primary">
                   <ShieldCheck className="size-4.5" />
                 </div>
