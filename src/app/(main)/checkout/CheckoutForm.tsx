@@ -5,6 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { createOrder } from "@/actions/order";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,6 +105,8 @@ const PAYMENT_ACCOUNTS = {
 type ProviderKey = keyof typeof PAYMENT_ACCOUNTS;
 
 export function CheckoutForm({ cart, user }: CheckoutFormProps) {
+  const queryClient = useQueryClient();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -155,6 +159,9 @@ export function CheckoutForm({ cart, user }: CheckoutFormProps) {
       if (result && "orderNumber" in result) {
         setOrderId(result.orderNumber as string);
         setShowSuccessModal(true);
+        // Immediately clear cart badge & details from React Query cache
+        queryClient.invalidateQueries({ queryKey: ["cart-count"] });
+        queryClient.invalidateQueries({ queryKey: ["cart-details"] });
       }
     } catch {
       toast.error("কিছু ভুল হয়েছে।");
@@ -356,39 +363,45 @@ export function CheckoutForm({ cart, user }: CheckoutFormProps) {
               <div
                 onClick={() => setValue("paymentMethod", "mobile")}
                 className={cn(
-                  "relative flex items-center justify-between p-5 rounded-xl border-2 transition-all cursor-pointer overflow-hidden group",
+                  "relative flex items-center gap-3 p-5 rounded-xl border-2 transition-all cursor-pointer w-full",
                   paymentMethod === "mobile"
                     ? "border-primary bg-primary/3"
                     : "border-border/40 bg-card/40 hover:border-primary/20",
                 )}
               >
                 {paymentMethod === "mobile" && (
-                  <div className="absolute top-0 right-0 bg-primary text-white p-1 rounded-bl-xl shadow-md">
+                  <div className="absolute top-0 right-0 bg-primary text-white p-1 rounded-tr-xl rounded-bl-xl shadow-md z-10">
                     <Check className="size-3.5 stroke-[4px]" />
                   </div>
                 )}
-                <div className="flex items-center gap-4">
-                  <Zap
-                    className={cn(
-                      "size-6",
-                      paymentMethod === "mobile"
-                        ? "text-primary"
-                        : "text-muted-foreground",
-                    )}
-                  />
-                  <span className="font-bold text-base">মোবাইল ব্যাংকিং</span>
-                </div>
-                <div className="flex -space-x-2">
+
+                {/* Icon */}
+                <Zap
+                  className={cn(
+                    "size-6 shrink-0",
+                    paymentMethod === "mobile"
+                      ? "text-primary"
+                      : "text-muted-foreground",
+                  )}
+                />
+
+                {/* Label */}
+                <span className="font-bold text-base flex-1 min-w-0 truncate">
+                  মোবাইল ব্যাংকিং
+                </span>
+
+                {/* Logos */}
+                <div className="flex shrink-0 -space-x-2 pr-4">
                   {["bkash", "nagad", "rocket"].map((p) => (
                     <div
                       key={p}
-                      className="size-10  rounded-full  bg-white shadow-sm overflow-hidden flex items-center justify-center"
+                      className="size-8 rounded-full bg-white shadow-sm ring-2 ring-white overflow-hidden flex items-center justify-center"
                     >
                       <Image
                         src={`/payment-method-logo/${p}.${p === "rocket" ? "png" : "svg"}`}
                         alt={p}
-                        width={32}
-                        height={32}
+                        width={28}
+                        height={28}
                         className="p-1 object-contain"
                       />
                     </div>
@@ -414,7 +427,7 @@ export function CheckoutForm({ cart, user }: CheckoutFormProps) {
                     )}
                   >
                     {paymentProvider === p && (
-                      <div className="absolute top-0 right-0 bg-primary text-white p-1 rounded-bl-lg">
+                      <div className="absolute top-0 right-0 bg-primary text-white p-1 rounded-tr-xl rounded-bl-xl">
                         <Check className="size-3 stroke-[4px]" />
                       </div>
                     )}
@@ -447,10 +460,10 @@ export function CheckoutForm({ cart, user }: CheckoutFormProps) {
                   </p>
                 </div>
 
-                <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100 group">
+                <div className="flex items-center justify-between gap-3 bg-slate-50 p-4 rounded-xl border border-slate-100 group overflow-hidden">
                   <p
                     className={cn(
-                      "text-2xl sm:text-3xl font-mono font-black  tracking-wider",
+                      "text-lg sm:text-2xl font-mono font-black tracking-wide min-w-0 truncate",
                       PAYMENT_ACCOUNTS[paymentProvider]?.color,
                     )}
                   >
@@ -462,7 +475,7 @@ export function CheckoutForm({ cart, user }: CheckoutFormProps) {
                     onClick={() =>
                       handleCopy(PAYMENT_ACCOUNTS[paymentProvider].number)
                     }
-                    className="h-10 px-5 rounded-lg text-xs font-black uppercase tracking-wider"
+                    className="shrink-0 h-9 px-4 rounded-lg text-xs font-black uppercase tracking-wider"
                   >
                     {copied ? "Copied" : "Copy"}
                   </Button>
@@ -587,8 +600,13 @@ export function CheckoutForm({ cart, user }: CheckoutFormProps) {
         </div>
       </form>
 
-      {/* Success Modal */}
-      <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
+      {/* Success Modal — closing redirects to /products since cart is empty */}
+      <Dialog
+        open={showSuccessModal}
+        onOpenChange={(open) => {
+          if (!open) router.push("/products");
+        }}
+      >
         <DialogContent className="max-w-[90vw] sm:max-w-105 rounded-[2.5rem] p-10 text-center space-y-6">
           <div className="size-20 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-2 animate-in zoom-in duration-500 shadow-inner">
             <PackageCheck className="size-10" />
