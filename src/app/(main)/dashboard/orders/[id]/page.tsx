@@ -57,9 +57,9 @@ export default async function UserOrderDetailsPage({
   );
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 sm:py-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="max-w-5xl mx-auto py-6 sm:py-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Header */}
-      <div className="mb-10 space-y-4">
+      <div className="mb-8 sm:mb-10 space-y-4">
         <Link
           href="/dashboard"
           className="inline-flex items-center gap-2 text-xs font-black text-slate-400 hover:text-primary transition-colors uppercase tracking-widest"
@@ -69,8 +69,8 @@ export default async function UserOrderDetailsPage({
         </Link>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="space-y-1">
-            <h1 className="text-3xl font-black tracking-tight text-slate-900">
-              Order #{order.orderNumber}
+            <h1 className="text-xl font-black tracking-tight text-slate-900">
+              Order ID: {order.orderNumber}
             </h1>
             <p className="text-slate-500 font-medium flex items-center gap-2">
               <Calendar className="size-4" />
@@ -90,8 +90,8 @@ export default async function UserOrderDetailsPage({
         {/* Left Side: Progress & Items */}
         <div className="lg:col-span-2 space-y-8">
           {/* Progress Tracker */}
-          <section className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8 sm:p-12">
-            <h3 className="text-lg font-black tracking-tight mb-12 flex items-center gap-2">
+          <section className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-6 sm:p-12">
+            <h3 className="text-lg font-black tracking-tight mb-8 sm:mb-12 flex items-center gap-2">
               <Truck className="size-6 text-primary" />
               Delivery Status
             </h3>
@@ -145,7 +145,7 @@ export default async function UserOrderDetailsPage({
 
           {/* Items List */}
           <section className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-6 sm:p-8 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+            <div className="p-5 sm:p-8 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
               <h3 className="font-black tracking-tight flex items-center gap-2">
                 <Package className="size-5 text-primary" />
                 Package Items ({order.items.length})
@@ -155,7 +155,7 @@ export default async function UserOrderDetailsPage({
               {order.items.map((item: IOrderItem, idx: number) => (
                 <div
                   key={idx}
-                  className="p-6 sm:p-8 flex items-center gap-6 hover:bg-slate-50/30 transition-colors"
+                  className="p-5 sm:p-8 flex items-center gap-6 hover:bg-slate-50/30 transition-colors"
                 >
                   <div className="relative size-20 rounded-2xl border border-slate-100 bg-white p-2 overflow-hidden shadow-sm shrink-0">
                     <Image
@@ -190,7 +190,7 @@ export default async function UserOrderDetailsPage({
             </div>
 
             {/* Pricing Footer */}
-            <div className="p-8 bg-slate-900 text-white flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="p-6 sm:p-8 bg-slate-900 text-white flex flex-col sm:flex-row items-center justify-between gap-6">
               <div className="flex items-center gap-6 text-center sm:text-left">
                 <div>
                   <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-1">
@@ -227,7 +227,7 @@ export default async function UserOrderDetailsPage({
         {/* Right Side: Shipping & Help */}
         <div className="space-y-8">
           {/* Shipping Info */}
-          <section className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8 space-y-8">
+          <section className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-6 sm:p-8 space-y-8">
             <h3 className="font-black tracking-tight flex items-center gap-3 border-b border-slate-50 pb-4">
               <MapPin className="size-5 text-primary" />
               Shipping Address
@@ -263,7 +263,7 @@ export default async function UserOrderDetailsPage({
           </section>
 
           {/* Payment Status */}
-          <section className="bg-slate-50 rounded-[2.5rem] border border-slate-200 p-8 space-y-6 relative overflow-hidden">
+          <section className="bg-white rounded-[2.5rem] border border-slate-200 p-6 sm:p-8 space-y-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 size-32 bg-primary/10 rounded-full blur-2xl -mr-16 -mt-16" />
             <h3 className="font-black tracking-tight flex items-center gap-3">
               <CreditCard className="size-5 text-primary" />
@@ -297,7 +297,7 @@ export default async function UserOrderDetailsPage({
           </section>
 
           {/* Help Card */}
-          <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white relative overflow-hidden group">
+          <div className="bg-slate-900 rounded-[2.5rem] p-6 sm:p-8 text-white relative overflow-hidden group">
             <div className="absolute bottom-0 right-0 size-48 bg-primary/20 rounded-full blur-[80px] -mb-24 -mr-24 transition-all group-hover:scale-125" />
             <h3 className="font-black tracking-tight mb-4 flex items-center gap-2">
               <Info className="size-5 text-primary" />
