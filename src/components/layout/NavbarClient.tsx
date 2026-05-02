@@ -21,6 +21,7 @@ import CartButton from "./CartButton";
 import UserMenuButton from "./UserMenuButton";
 import SearchDropdown from "./SearchDropdown";
 import Image from "next/image";
+import { WhatsAppIcon } from "@/socialCustomSVGIcon/SocialCustomSVGIcon";
 
 const NAV_ITEMS = [
   { label: "Home", href: "/", icon: House },
@@ -227,7 +228,7 @@ export default function NavbarClient() {
 
             <CartButton />
             <UserMenuButton />
- 
+
             <Button
               variant="ghost"
               size="icon"
@@ -283,17 +284,32 @@ export default function NavbarClient() {
         </>
       )}
 
-      {/* Scroll to Top */}
-      {showScrollTop && (
-        <Button
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          size="icon"
-          className="fixed bottom-20 right-4 z-40 h-11 w-11 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-300 hover:scale-110 active:scale-95 animate-in fade-in slide-in-from-bottom-4"
-          aria-label="Scroll to top"
+      {/* Floating Action Buttons */}
+      <div className="fixed bottom-20 right-4 z-40 flex flex-col gap-3">
+        {/* WhatsApp Button */}
+        <Link
+          href="https://wa.me/8801540505122"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex size-11 items-center justify-center rounded-full bg-[#25D366]/20 backdrop-blur-xl border border-[#25D366]/30 text-[#25D366] shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 hover:bg-[#25D366]/30 group"
+          aria-label="Chat on WhatsApp"
         >
-          <ChevronUp className="size-5" />
-        </Button>
-      )}
+          <div className="absolute inset-0 rounded-full bg-[#25D366]/10 animate-ping group-hover:hidden" />
+          <WhatsAppIcon className="size-6 relative z-10" />
+        </Link>
+
+        {/* Scroll to Top */}
+        {showScrollTop && (
+          <Button
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            size="icon"
+            className="h-11 w-11 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-all duration-300 hover:scale-110 active:scale-95 animate-in fade-in slide-in-from-bottom-4"
+            aria-label="Scroll to top"
+          >
+            <ChevronUp className="size-5" />
+          </Button>
+        )}
+      </div>
 
       <div className="h-14" />
     </>

@@ -49,6 +49,18 @@ export async function signUp(formData: z.infer<typeof RegisterSchema>) {
   }
 }
 
+export async function checkUserStatus(email: string) {
+  try {
+    await dbConnect();
+    const user = await User.findOne({ email }).select("password");
+    if (!user) return { exists: false };
+    if (!user.password) return { exists: true, socialOnly: true };
+    return { exists: true, socialOnly: false };
+  } catch (error) {
+    return { error: `Error checking user ${error}` };
+  }
+}
+
 export async function logout() {
   await signOut({ redirectTo: "/" });
 }

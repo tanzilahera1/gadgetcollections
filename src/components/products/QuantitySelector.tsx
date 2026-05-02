@@ -16,7 +16,7 @@ interface QuantitySelectorProps {
  
 export default function QuantitySelector({
   quantity,
-  setQuantity,
+  setQuantity, 
   min,
   max, 
   step = 1,

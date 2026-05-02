@@ -99,6 +99,7 @@ export default async function AdminCategoriesPage() {
                             src={cat.image}
                             alt={cat.name}
                             fill
+                            sizes="56px"
                             className="object-contain"
                           />
                         ) : (

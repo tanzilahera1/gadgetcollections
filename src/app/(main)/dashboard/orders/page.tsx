@@ -156,7 +156,7 @@ export default async function UserOrdersPage() {
                   <div className="flex -space-x-3 overflow-hidden">
                     {order.items.slice(0, 4).map((item, idx) => (
                       <div key={idx} className="relative size-12 rounded-xl border-2 border-white bg-slate-50 p-1 shadow-sm shrink-0">
-                        <Image src={item.productImage || '/logo.png'} alt={item.productTitle} fill className="object-contain p-1" />
+                        <Image src={item.productImage || '/logo.png'} alt={item.productTitle} fill sizes="48px" className="object-contain p-1" />
                       </div>
                     ))}
                     {order.items.length > 4 && (

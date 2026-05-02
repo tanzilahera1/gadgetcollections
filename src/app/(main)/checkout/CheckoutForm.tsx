@@ -1,11 +1,12 @@
 // src\app\(main)\checkout\CheckoutForm.tsx
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { createOrder } from "@/actions/order";
 import { Button } from "@/components/ui/button";
@@ -105,6 +106,7 @@ const PAYMENT_ACCOUNTS = {
 type ProviderKey = keyof typeof PAYMENT_ACCOUNTS;
 
 export function CheckoutForm({ cart, user }: CheckoutFormProps) {
+  const { data: session } = useSession();
   const queryClient = useQueryClient();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -116,7 +118,7 @@ export function CheckoutForm({ cart, user }: CheckoutFormProps) {
     register,
     handleSubmit,
     setValue,
-    watch,
+    control,
     formState: { errors },
   } = useForm<CheckoutValues>({
     resolver: zodResolver(CheckoutSchema),
@@ -129,9 +131,30 @@ export function CheckoutForm({ cart, user }: CheckoutFormProps) {
     },
   });
 
-  const deliveryArea = watch("deliveryArea");
-  const paymentMethod = watch("paymentMethod");
-  const paymentProvider = watch("paymentProvider") as ProviderKey;
+  // লগইন করে ফিরে আসার পর ডাটা রিস্টোর করো
+  useEffect(() => {
+    const savedData = sessionStorage.getItem("checkout_form_data");
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        Object.keys(parsed).forEach((key) => {
+          setValue(key as keyof CheckoutValues, parsed[key]);
+        });
+        toast.success("আপনার আগের তথ্যগুলো রিস্টোর করা হয়েছে।");
+      } catch (e) {
+        console.error("Failed to restore checkout data", e);
+      } finally {
+        sessionStorage.removeItem("checkout_form_data");
+      }
+    }
+  }, [setValue]);
+
+  const deliveryArea = useWatch({ control, name: "deliveryArea" });
+  const paymentMethod = useWatch({ control, name: "paymentMethod" });
+  const paymentProvider = useWatch({
+    control,
+    name: "paymentProvider",
+  }) as ProviderKey;
 
   const deliveryCharge = deliveryArea === "dhaka" ? 60 : 120;
   const grandTotal = cart.total + deliveryCharge;
@@ -143,6 +166,14 @@ export function CheckoutForm({ cart, user }: CheckoutFormProps) {
   };
 
   const onSubmit = async (data: CheckoutValues) => {
+    // যদি লগিন না থাকে, তবে ডাটা সেভ করে লগিন পেইজে পাঠাও
+    if (!session) {
+      toast.info("অর্ডার কনফার্ম করতে দয়া করে লগইন করুন।");
+      sessionStorage.setItem("checkout_form_data", JSON.stringify(data));
+      router.push(`/login?callbackUrl=${encodeURIComponent("/checkout")}`);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const formData = new FormData();
@@ -395,14 +426,14 @@ export function CheckoutForm({ cart, user }: CheckoutFormProps) {
                   {["bkash", "nagad", "rocket"].map((p) => (
                     <div
                       key={p}
-                      className="size-8 rounded-full bg-white shadow-sm ring-2 ring-white overflow-hidden flex items-center justify-center"
+                      className="relative size-10 rounded-full bg-white shadow-sm ring-2 ring-white overflow-hidden flex items-center justify-center"
                     >
                       <Image
                         src={`/payment-method-logo/${p}.${p === "rocket" ? "png" : "svg"}`}
                         alt={p}
-                        width={28}
-                        height={28}
-                        className="p-1 object-contain"
+                        fill
+                        className="object-contain p-1.5"
+                        sizes="40px"
                       />
                     </div>
                   ))}
@@ -436,6 +467,7 @@ export function CheckoutForm({ cart, user }: CheckoutFormProps) {
                         src={PAYMENT_ACCOUNTS[p].logo}
                         alt={p}
                         fill
+                        sizes="48px"
                         className="object-contain"
                       />
                     </div>
@@ -529,6 +561,7 @@ export function CheckoutForm({ cart, user }: CheckoutFormProps) {
                       src={item.product.thumbnail}
                       alt={item.product.title}
                       fill
+                      sizes="64px"
                       className="object-cover"
                     />
                     <span className="absolute top-0 right-0 bg-primary text-white text-[9px] font-black px-2 py-0.5 rounded-bl-lg shadow-md">

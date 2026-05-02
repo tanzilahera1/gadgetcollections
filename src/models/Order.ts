@@ -1,9 +1,9 @@
-import { Schema, models, model } from 'mongoose'
-import type { IOrder } from '@/types/order'
+import { Schema, models, model } from "mongoose";
+import type { IOrder } from "@/types/order";
 
 const OrderItemSchema = new Schema(
   {
-    product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
+    product: { type: Schema.Types.ObjectId, ref: "Product", required: true },
     variant: { type: Schema.Types.ObjectId },
     productTitle: { type: String, required: true },
     productSlug: { type: String, required: true },
@@ -12,8 +12,8 @@ const OrderItemSchema = new Schema(
     itemQuantity: { type: Number, required: true, min: 1 },
     productSku: { type: String, required: true },
   },
-  { _id: true }
-)
+  { _id: true },
+);
 
 const OrderShippingSchema = new Schema(
   {
@@ -24,15 +24,14 @@ const OrderShippingSchema = new Schema(
     city: { type: String },
     district: { type: String },
     postalCode: { type: String },
-
   },
-  { _id: false }
-)
+  { _id: false },
+);
 
-const OrderSchema = new Schema<IOrder & Document>(
+const OrderSchema = new Schema<IOrder>(
   {
     orderNumber: { type: String, required: true, unique: true },
-    user: { type: Schema.Types.ObjectId, ref: 'User' },
+    user: { type: Schema.Types.ObjectId, ref: "User" },
     items: { type: [OrderItemSchema], required: true },
     shipping: { type: OrderShippingSchema, required: true },
     subtotal: { type: Number, required: true, min: 0 },
@@ -41,32 +40,32 @@ const OrderSchema = new Schema<IOrder & Document>(
     total: { type: Number, required: true, min: 0 },
     paymentMethod: {
       type: String,
-      enum: ['cod', 'mobile'],
+      enum: ["cod", "mobile"],
       required: true,
     },
     paymentStatus: {
       type: String,
-      enum: ['pending', 'paid', 'failed', 'refunded'],
-      default: 'pending',
+      enum: ["pending", "paid", "failed", "refunded"],
+      default: "pending",
     },
     transactionId: { type: String, trim: true },
     senderNumber: { type: String, trim: true },
-    paymentProvider: { 
-      type: String, 
-      enum: ['bkash', 'nagad', 'rocket'],
-      trim: true 
+    paymentProvider: {
+      type: String,
+      enum: ["bkash", "nagad", "rocket"],
+      trim: true,
     },
     orderStatus: {
       type: String,
       enum: [
-        'pending',
-        'processing',
-        'shipped',
-        'delivered',
-        'cancelled',
-        'returned',
+        "pending",
+        "processing",
+        "shipped",
+        "delivered",
+        "cancelled",
+        "returned",
       ],
-      default: 'pending',
+      default: "pending",
     },
     paidAt: { type: Date },
     shippedAt: { type: Date },
@@ -76,14 +75,14 @@ const OrderSchema = new Schema<IOrder & Document>(
     adminNotes: { type: String },
     couponCode: { type: String, trim: true },
   },
-  { timestamps: true }
-)
+  { timestamps: true },
+);
 
-OrderSchema.index({ orderNumber: 1 })
-OrderSchema.index({ user: 1 })
-OrderSchema.index({ orderStatus: 1 })
-OrderSchema.index({ paymentStatus: 1 })
-OrderSchema.index({ createdAt: -1 })
-OrderSchema.index({ 'shipping.phone': 1 })
+OrderSchema.index({ orderNumber: 1 });
+OrderSchema.index({ user: 1 });
+OrderSchema.index({ orderStatus: 1 });
+OrderSchema.index({ paymentStatus: 1 });
+OrderSchema.index({ createdAt: -1 });
+OrderSchema.index({ "shipping.phone": 1 });
 
-export default models.Order || model<IOrder & Document>('Order', OrderSchema)
+export default models.Order || model<IOrder>("Order", OrderSchema);

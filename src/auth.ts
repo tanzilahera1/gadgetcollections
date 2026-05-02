@@ -1,5 +1,5 @@
 // src/auth.ts
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
@@ -20,7 +20,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Google({
       clientId: process.env.AUTH_GOOGLE_ID!,
       clientSecret: process.env.AUTH_GOOGLE_SECRET!,
-      // এখান থেকে সরাই দিছি
+      // এখান থেকে সরাই দিছ
     }),
     Credentials({
       name: "Credentials",
@@ -45,10 +45,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           IUser & { _id: mongoose.Types.ObjectId }
         >();
 
-        if (!user || !user.password) return null;
+        // UX উন্নত করার জন্য আলাদা আলাদা এরর
+        if (!user) {
+          throw new CredentialsSignin("UserNotFound");
+        }
+
+        if (!user.password) {
+          throw new CredentialsSignin("SocialAccountOnly");
+        }
 
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return null;
+        if (!isMatch) {
+          throw new CredentialsSignin("InvalidPassword");
+        }
 
         return {
           id: user._id.toString(),
@@ -62,12 +71,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async jwt({ token, user, trigger, account }) {
-      // প্রথম লগিনে DB থেকে ফ্রেশ ডাটা
+      // প্রথম লগিনে DB থেকে ফ্রেশ ডাটা এবং lastLogin আপডেট
       if (user) {
         await dbConnect();
-        const dbUser = await User.findById(user.id).lean<
-          IUser & { _id: mongoose.Types.ObjectId }
-        >();
+        const dbUser = await User.findByIdAndUpdate(
+          user.id,
+          { lastLogin: new Date() },
+          { new: true },
+        ).lean<IUser & { _id: mongoose.Types.ObjectId }>();
+
         if (dbUser) {
           token.id = dbUser._id.toString();
           token.role = dbUser.role;

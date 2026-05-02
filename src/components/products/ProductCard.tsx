@@ -3,18 +3,20 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ShoppingCart, Star, Minus, Plus, Loader2, Heart } from "lucide-react";
+import { ShoppingCart, Star, Loader2, Heart, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatPrice, calculateDiscount } from "@/lib/priceUtils";
 import { useCart } from "@/hooks/useCart";
 import { useWishlist } from "@/hooks/useWishlist";
 import { toast } from "sonner";
+import QuantitySelector from "@/components/products/QuantitySelector";
 
 // Type Imports
 import type { IProduct } from "@/types/product";
 import type { ICartItem, IPopulatedCartItem } from "@/types/cart";
 import { ICategory } from "@/types/category";
+import { useState } from "react";
 
 export default function ProductCard({ product }: { product: IProduct }) {
   const {
@@ -65,17 +67,22 @@ export default function ProductCard({ product }: { product: IProduct }) {
   const isInCart = !!cartItem;
   const currentQty = cartItem?.itemQuantity || 0;
   const isActionPending = isAdding || isUpdating || isRemoving;
+  const [showSuccess, setShowSuccess] = useState(false);
 
   // Handlers
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     if (product.stockQuantity === 0) return toast.error("স্টক নেই!");
 
+    // ইনস্ট্যান্ট ফিডব্যাক দেওয়ার জন্য
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 2000);
+
     addToCart(
       { productId: String(product._id), quantity: 1 },
       {
         onSuccess: (data: { success?: boolean }) => {
-          if (data.success) {
+          if (data?.success) {
             toast.success(`${product.title} কার্টে যোগ করা হয়েছে!`, {
               icon: <ShoppingCart className="size-4" />,
             });
@@ -85,8 +92,8 @@ export default function ProductCard({ product }: { product: IProduct }) {
     );
   };
 
-  const handleIncrease = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleIncrease = (e?: React.MouseEvent) => {
+    e?.preventDefault();
     if (currentQty < product.stockQuantity) {
       updateQty({
         productId: String(product._id),
@@ -97,8 +104,8 @@ export default function ProductCard({ product }: { product: IProduct }) {
     }
   };
 
-  const handleDecrease = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleDecrease = (e?: React.MouseEvent) => {
+    e?.preventDefault();
     if (currentQty > 1) {
       updateQty({
         productId: String(product._id),
@@ -117,7 +124,7 @@ export default function ProductCard({ product }: { product: IProduct }) {
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-xl  bg-card glass-border transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
       {/* 1. Image Container */}
-      <div className="relative aspect-square w-full overflow-hidden bg-muted/20 rounded-t-xl">
+      <div className="relative aspect-square w-full overflow-hidden rounded-t-xl">
         <Link href={productHref} className="absolute inset-0 z-0 block">
           <Image
             src={product.thumbnail}
@@ -128,27 +135,23 @@ export default function ProductCard({ product }: { product: IProduct }) {
           />
         </Link>
 
-        {/* Top Overlay Gradient */}
-        <div className="absolute inset-x-0 top-0 h-16 bg-linear-to-b from-black/40 to-transparent z-0" />
-
         {/* Discount Badge */}
         {discountPercentage > 0 && (
-          <div className="absolute left-3 top-3 z-10 px-2.5 py-1 rounded-full bg-amber-500 text-[11px] font-extrabold text-black shadow-lg">
+          <div className="absolute left-3 top-3 z-10 px-2.5 py-1 rounded-full bg-amber-500/20 backdrop-blur-xl border border-amber-500/20 text-amber-700 text-[10px] font-black uppercase tracking-wider shadow-lg dark:text-amber-400">
             {discountPercentage}% OFF
           </div>
         )}
 
-        {/* Wishlist Button */}
         <button
           onClick={(e) => {
             e.preventDefault();
             toggleWishlist({ productId: String(product._id) });
           }}
           className={cn(
-            "absolute right-3 top-3 z-10 flex size-8 items-center justify-center rounded-full bg-background/80 backdrop-blur-md transition-all duration-300 shadow-sm active:scale-90",
+            "absolute right-3 top-3 z-10 flex size-8 items-center justify-center rounded-full bg-white/40 backdrop-blur-xl border border-slate-200/60 transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.15)] active:scale-90 hover:bg-white/60",
             wishlistIds.includes(String(product._id))
-              ? "text-rose-500 scale-105 shadow-rose-500/20"
-              : "text-foreground/70 hover:text-rose-500 hover:scale-105",
+              ? "text-rose-500 scale-105 shadow-rose-500/20 border-rose-500/30 bg-white/60"
+              : "text-slate-700",
           )}
         >
           <Heart
@@ -217,44 +220,35 @@ export default function ProductCard({ product }: { product: IProduct }) {
               <button
                 onClick={handleAddToCart}
                 disabled={product.stockQuantity === 0 || isActionPending}
-                className="flex h-9.5  items-center justify-center gap-1.5 rounded-md bg-foreground px-3 text-sm font-bold text-white transition-all active:scale-95 disabled:opacity-50 dark:text-black"
+                className={cn(
+                  "flex h-9.5 items-center justify-center gap-1.5 rounded-md px-3 text-sm font-bold transition-all active:scale-95 disabled:opacity-50",
+                  showSuccess
+                    ? "bg-emerald-500 text-white"
+                    : "bg-foreground text-white dark:text-black",
+                )}
               >
-                {isActionPending ? (
+                {showSuccess ? (
+                  <Check className="size-4 shrink-0" />
+                ) : isActionPending ? (
                   <Loader2 className="size-4 animate-spin" />
                 ) : (
                   <ShoppingCart className="size-4 shrink-0" />
                 )}
-                <span>কার্টে যোগ করুন</span>
+                <span>{showSuccess ? "যোগ হয়েছে" : "কার্টে যোগ করুন"}</span>
               </button>
             ) : (
-              /* State 2: Quantity Selector */
-              <div className="flex h-9.5 w-27.5 items-center justify-between rounded-full bg-secondary/50 px-1 border border-border/50">
-                <button
-                  onClick={handleDecrease}
-                  disabled={isActionPending}
-                  className="flex size-8 items-center justify-center rounded-full text-foreground hover:bg-background/80 disabled:opacity-50"
-                >
-                  <Minus className="size-4" />
-                </button>
-
-                <span className="w-4 text-center text-sm font-bold tabular-nums">
-                  {isActionPending ? (
-                    <Loader2 className="mx-auto size-3.5 animate-spin text-muted-foreground" />
-                  ) : (
-                    currentQty
-                  )}
-                </span>
-
-                <button
-                  onClick={handleIncrease}
-                  disabled={
-                    currentQty >= product.stockQuantity || isActionPending
-                  }
-                  className="flex size-8 items-center justify-center rounded-full text-foreground hover:bg-background/80 disabled:opacity-50"
-                >
-                  <Plus className="size-4" />
-                </button>
-              </div>
+              /* State 2: Quantity Selector - Centralized */
+              <QuantitySelector
+                quantity={currentQty}
+                setQuantity={(val) => {
+                  if (val > currentQty) handleIncrease();
+                  else handleDecrease();
+                }}
+                min={1}
+                max={product.stockQuantity}
+                variant="compact"
+                className="w-28"
+              />
             )}
           </div>
         </div>

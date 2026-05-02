@@ -6,19 +6,28 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { signUp } from "@/actions/auth";
 import { toast } from "sonner";
-import { 
-  User, Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck 
+import {
+  User,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  Loader2,
+  ArrowRight,
+  ShieldCheck,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 const registerSchema = z.object({
   fullName: z.string().min(3, "নাম কমপক্ষে ৩ অক্ষর হওয়া উচিত"),
   email: z.string().email("সঠিক ইমেইল অ্যাড্রেস দিন"),
-  password: z.string()
+  password: z
+    .string()
     .min(8, "পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে")
     .regex(/[A-Z]/, "পাসওয়ার্ডে কমপক্ষে একটি বড় হাতের অক্ষর (A-Z) থাকতে হবে")
     .regex(/[0-9]/, "পাসওয়ার্ডে কমপক্ষে একটি সংখ্যা (0-9) থাকতে হবে"),
@@ -30,6 +39,8 @@ export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
 
   const {
     register,
@@ -45,13 +56,28 @@ export function RegisterForm() {
       const result = await signUp(data);
       if (result.error) {
         toast.error(result.error);
+        setIsLoading(false);
       } else {
-        toast.success(result.message);
-        router.push("/login");
+        toast.success("রেজিস্ট্রেশন সফল হয়েছে! লগইন হচ্ছে...");
+
+        // অটোমেটিক লগইন
+        const loginResult = await signIn("credentials", {
+          email: data.email,
+          password: data.password,
+          redirect: false,
+          callbackUrl,
+        });
+
+        if (loginResult?.error) {
+          toast.error("স্বয়ংক্রিয় লগইন ব্যর্থ হয়েছে। দয়া করে লগইন করুন।");
+          router.push("/login");
+        } else {
+          router.replace(loginResult?.url || callbackUrl);
+          router.refresh();
+        }
       }
     } catch (error) {
-      toast.error("কিছু ভুল হয়েছে। আবার চেষ্টা করুন।");
-    } finally {
+      toast.error(`কিছু ভুল হয়েছে। আবার চেষ্টা করুন। ${error}`);
       setIsLoading(false);
     }
   };
@@ -65,8 +91,12 @@ export function RegisterForm() {
 
         <div className="relative space-y-6">
           <div className="text-center space-y-2">
-            <h1 className="text-3xl font-black tracking-tight text-slate-900">Sign Up</h1>
-            <p className="text-sm font-medium text-slate-500">Create your account to start shopping.</p>
+            <h1 className="text-3xl font-black tracking-tight text-slate-900">
+              Sign Up
+            </h1>
+            <p className="text-sm font-medium text-slate-500">
+              Create your account to start shopping.
+            </p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -81,12 +111,15 @@ export function RegisterForm() {
                   placeholder="Your Full Name"
                   className={cn(
                     "h-14 pl-12 pr-4 bg-white/60 border-slate-200 rounded-2xl focus:bg-white focus:ring-4 ring-primary/5 transition-all text-sm font-bold",
-                    errors.fullName && "border-rose-500 focus:ring-rose-500/5 bg-rose-50/30"
+                    errors.fullName &&
+                      "border-rose-500 focus:ring-rose-500/5 bg-rose-50/30",
                   )}
                 />
               </div>
               {errors.fullName && (
-                <p className="text-[10px] font-bold text-rose-500 ml-1">{errors.fullName.message}</p>
+                <p className="text-[10px] font-bold text-rose-500 ml-1">
+                  {errors.fullName.message}
+                </p>
               )}
             </div>
 
@@ -101,12 +134,15 @@ export function RegisterForm() {
                   placeholder="Your Email Address"
                   className={cn(
                     "h-14 pl-12 pr-4 bg-white/60 border-slate-200 rounded-2xl focus:bg-white focus:ring-4 ring-primary/5 transition-all text-sm font-bold",
-                    errors.email && "border-rose-500 focus:ring-rose-500/5 bg-rose-50/30"
+                    errors.email &&
+                      "border-rose-500 focus:ring-rose-500/5 bg-rose-50/30",
                   )}
                 />
               </div>
               {errors.email && (
-                <p className="text-[10px] font-bold text-rose-500 ml-1">{errors.email.message}</p>
+                <p className="text-[10px] font-bold text-rose-500 ml-1">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 
@@ -122,7 +158,8 @@ export function RegisterForm() {
                   placeholder="Enter a password"
                   className={cn(
                     "h-14 pl-12 pr-12 bg-white/60 border-slate-200 rounded-2xl focus:bg-white focus:ring-4 ring-primary/5 transition-all text-sm font-bold",
-                    errors.password && "border-rose-500 focus:ring-rose-500/5 bg-rose-50/30"
+                    errors.password &&
+                      "border-rose-500 focus:ring-rose-500/5 bg-rose-50/30",
                   )}
                 />
                 <button
@@ -130,17 +167,24 @@ export function RegisterForm() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                 >
-                  {showPassword ? <EyeOff className="size-4.5" /> : <Eye className="size-4.5" />}
+                  {showPassword ? (
+                    <EyeOff className="size-4.5" />
+                  ) : (
+                    <Eye className="size-4.5" />
+                  )}
                 </button>
               </div>
               <div className="flex items-start gap-2 pt-1 border-t border-slate-200 mt-2 opacity-50">
                 <ShieldCheck className="size-3 text-slate-400 shrink-0 mt-0.5" />
                 <p className="text-[10px] font-bold text-slate-500 leading-tight">
-                  Password must be at least 8 characters, with uppercase & number
+                  Password must be at least 8 characters, with uppercase &
+                  number
                 </p>
               </div>
               {errors.password && (
-                <p className="text-[10px] font-bold text-rose-500 ml-1">{errors.password.message}</p>
+                <p className="text-[10px] font-bold text-rose-500 ml-1">
+                  {errors.password.message}
+                </p>
               )}
             </div>
 
@@ -160,12 +204,15 @@ export function RegisterForm() {
           </form>
 
           <div className="text-center">
-             <p className="text-xs font-bold text-slate-400">
-               Already have an account?{" "}
-               <Link href="/login" className="text-primary hover:underline underline-offset-4 decoration-2">
-                 Login
-               </Link>
-             </p>
+            <p className="text-xs font-bold text-slate-400">
+              Already have an account?{" "}
+              <Link
+                href={`/login${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`}
+                className="text-primary hover:underline underline-offset-4 decoration-2"
+              >
+                Login
+              </Link>
+            </p>
           </div>
         </div>
       </div>

@@ -48,6 +48,7 @@ export function ProductImageGallery({ images }: ProductImageGalleryProps) {
               src={img.url} 
               alt={img.alt}
               fill
+              sizes="80px"
               className="object-cover"
             />
           </button>

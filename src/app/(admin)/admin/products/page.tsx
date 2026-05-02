@@ -130,6 +130,7 @@ export default async function AdminProductsPage() {
                             src={product.thumbnail || "/placeholder-image.png"}
                             alt={product.title}
                             fill
+                            sizes="56px"
                             className="object-contain"
                           />
                         </div>

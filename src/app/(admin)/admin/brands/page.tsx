@@ -98,6 +98,7 @@ export default async function AdminBrandsPage() {
                             src={brand.logo}
                             alt={brand.name}
                             fill
+                            sizes="56px"
                             className="object-contain p-1"
                           />
                         ) : (

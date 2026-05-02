@@ -20,14 +20,12 @@ export function Providers({
             staleTime: 60 * 1000,
           },
         },
-      })
+      }),
   );
 
   return (
     <SessionProvider session={session}>
-      <QueryClientProvider client={queryClient}>
-        {children}
-      </QueryClientProvider>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     </SessionProvider>
   );
 }

@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { signIn } from "next-auth/react";
+import { checkUserStatus } from "@/actions/auth";
 import type { ILoginInput } from "@/types/auth";
 
 const REMEMBERED_EMAIL_KEY = "gc.remembered-email";
@@ -63,6 +64,32 @@ function LoginFormInner() {
     setIsLoading(true);
 
     try {
+      // ১. প্রথমে চেক করো ইউজার আছে কিনা (UX উন্নত করার জন্য)
+      const userStatus = await checkUserStatus(data.email);
+
+      if (userStatus.error) {
+        toast.error("সার্ভার সমস্যা। দয়া করে আবার চেষ্টা করুন।");
+        setIsLoading(false);
+        return;
+      }
+
+      if (!userStatus.exists) {
+        toast.error(
+          "এই ইমেইলে কোনো অ্যাকাউন্ট পাওয়া যায়নি। দয়া করে রেজিস্ট্রেশন করুন।",
+        );
+        setIsLoading(false);
+        return;
+      }
+
+      if (userStatus.socialOnly) {
+        toast.error(
+          "এই অ্যাকাউন্টটি Google দিয়ে তৈরি করা। দয়া করে 'Continue with Google' ক্লিক করুন।",
+        );
+        setIsLoading(false);
+        return;
+      }
+
+      // ২. ইউজার থাকলে তখন NextAuth দিয়ে লগইন করার চেষ্টা করো
       const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
@@ -71,7 +98,7 @@ function LoginFormInner() {
       });
 
       if (result?.error) {
-        toast.error("ইমেইল বা পাসওয়ার্ড সঠিক নয়");
+        toast.error("পাসওয়ার্ড সঠিক নয়। আবার চেষ্টা করুন।");
         return;
       }
 
@@ -234,7 +261,7 @@ function LoginFormInner() {
             <p className="text-xs font-bold text-slate-400">
               New user?{" "}
               <Link
-                href="/register"
+                href={`/register${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`}
                 className="text-primary hover:underline underline-offset-4 decoration-2"
               >
                 Register
