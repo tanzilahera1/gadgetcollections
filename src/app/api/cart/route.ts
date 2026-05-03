@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { dbConnect } from "@/lib/db";
 import Cart from "@/models/Cart";
 import Product from "@/models/Product";
+import Category from "@/models/Category";
 import { cookies } from "next/headers";
 import type { ICart, IPopulatedCartItem } from "@/types/cart";
 import type { IProduct } from "@/types/product";
@@ -23,6 +24,7 @@ type PopulatedCart = Omit<ICart, "items"> & {
       | "salePrice"
       | "stockQuantity"
       | "status"
+      | "category"
     >;
     itemQuantity: number;
     addedAt: Date;
@@ -52,7 +54,12 @@ export async function GET() {
         path: "items.product",
         model: Product,
         select:
-          "title slug thumbnail regularPrice salePrice stockQuantity status",
+          "title slug thumbnail regularPrice salePrice stockQuantity status category",
+        populate: {
+          path: "category",
+          model: Category,
+          select: "slug",
+        },
       })
       .lean<PopulatedCart>();
 
@@ -76,6 +83,7 @@ export async function GET() {
             salePrice: product.salePrice,
             stockQuantity: product.stockQuantity,
             status: product.status,
+            category: product.category as { slug: string },
           },
           itemQuantity: item.itemQuantity,
           addedAt: item.addedAt,

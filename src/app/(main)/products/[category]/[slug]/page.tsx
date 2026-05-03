@@ -12,7 +12,7 @@ import type { IProduct, IProductSpecification } from "@/types/product";
 import type { ICategory } from "@/types/category";
 import Footer from "@/components/layout/Footer";
 import { Metadata } from "next";
-import { Types } from "mongoose"; 
+import { Types } from "mongoose";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -180,6 +180,7 @@ export default async function ProductDetailPage({
           <div className="pt-2 border-t">
             <ProductActions
               productId={String(product._id)}
+              productTitle={product.title}
               stock={product.stockQuantity}
             />
           </div>
@@ -207,7 +208,7 @@ export default async function ProductDetailPage({
                 </div>
               ),
             )}
-          </div> 
+          </div>
         </div>
       </div>
 

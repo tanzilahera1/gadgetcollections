@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 import { addToCart, updateQty, removeFromCart } from "@/actions/cart";
 import { toast } from "sonner";
 import { ICart, ICartItem, IPopulatedCartItem } from "@/types/cart";
@@ -6,24 +7,29 @@ import { ICart, ICartItem, IPopulatedCartItem } from "@/types/cart";
 export function useCart() {
   const queryClient = useQueryClient();
 
+  const { data: session } = useSession();
+  const userId = session?.user?.id || "guest";
+
   // 1. Fetch Cart Count (Optimized for small data)
   const { data: cartCount = 0, isLoading: isLoadingCount } = useQuery({
-    queryKey: ["cart-count"],
+    queryKey: ["cart-count", userId],
     queryFn: async () => {
       const res = await fetch("/api/cart/count");
       const data = await res.json();
       return data.count as number;
     },
+    staleTime: 30 * 1000, // 30 seconds
   });
 
   // 2. Fetch Full Cart Details
   const { data: cartData = { items: [], total: 0 }, isLoading: isLoadingCart } =
     useQuery({
-      queryKey: ["cart-details"],
+      queryKey: ["cart-details", userId],
       queryFn: async () => {
         const res = await fetch("/api/cart");
         return await res.json();
       },
+      staleTime: 30 * 1000,
     });
 
   // 3. Add to Cart Mutation
@@ -42,42 +48,51 @@ export function useCart() {
     },
     onMutate: async (newItem) => {
       // ১. অন্য কোনো ফেচ রিফ্রেশ বন্ধ করো যাতে ওভাররাইট না হয়
-      await queryClient.cancelQueries({ queryKey: ["cart-count"] });
-      await queryClient.cancelQueries({ queryKey: ["cart-details"] });
+      await queryClient.cancelQueries({ queryKey: ["cart-count", userId] });
+      await queryClient.cancelQueries({ queryKey: ["cart-details", userId] });
 
       // ২. আগের ডেটা সেভ করে রাখো (এরর হলে রোলব্যাক করার জন্য)
-      const previousCount = queryClient.getQueryData(["cart-count"]);
-      const previousDetails = queryClient.getQueryData(["cart-details"]);
+      const previousCount = queryClient.getQueryData(["cart-count", userId]);
+      const previousDetails = queryClient.getQueryData([
+        "cart-details",
+        userId,
+      ]);
 
       // ৩. ইনস্ট্যান্টলি UI আপডেট করো (Optimistic Update)
-      queryClient.setQueryData(
-        ["cart-count"],
-        (old: number = 0) => old + newItem.quantity,
-      );
-
-      // কার্ট ডিটেইলসেও নতুন আইটেম যোগ করার চেষ্টা করা যেতে পারে, তবে কাউন্ট ইনাফ ইনস্ট্যান্ট ফিলের জন্য
+      queryClient.setQueryData(["cart-count", userId], (old: number = 0) => {
+        const cart = previousDetails as
+          | { items?: (ICartItem | IPopulatedCartItem)[] }
+          | undefined;
+        const alreadyInCart = cart?.items?.some((item) => {
+          const id =
+            typeof item.product === "object" ? item.product._id : item.product;
+          return String(id) === newItem.productId;
+        });
+        return alreadyInCart ? old : old + 1;
+      });
 
       return { previousCount, previousDetails };
     },
     onSuccess: (data) => {
-      if (data.success) {
-        toast.success("কার্টে যোগ হয়েছে!");
-      } else {
+      if (!data.success) {
         toast.error(data.error || "Failed to add to cart");
       }
     },
     onError: (err, newItem, context) => {
       // ৪. সমস্যা হলে আগের ডেটাতে ফিরে যাও
       if (context) {
-        queryClient.setQueryData(["cart-count"], context.previousCount);
-        queryClient.setQueryData(["cart-details"], context.previousDetails);
+        queryClient.setQueryData(["cart-count", userId], context.previousCount);
+        queryClient.setQueryData(
+          ["cart-details", userId],
+          context.previousDetails,
+        );
       }
       toast.error("Something went wrong");
     },
     onSettled: () => {
       // ৫. কাজ শেষে সার্ভারের সাথে সিঙ্ক করে নাও
-      queryClient.invalidateQueries({ queryKey: ["cart-count"] });
-      queryClient.invalidateQueries({ queryKey: ["cart-details"] });
+      queryClient.invalidateQueries({ queryKey: ["cart-count", userId] });
+      queryClient.invalidateQueries({ queryKey: ["cart-details", userId] });
     },
   });
 
@@ -96,13 +111,16 @@ export function useCart() {
       return updateQty(formData);
     },
     onMutate: async (updatedItem) => {
-      await queryClient.cancelQueries({ queryKey: ["cart-count"] });
-      await queryClient.cancelQueries({ queryKey: ["cart-details"] });
+      await queryClient.cancelQueries({ queryKey: ["cart-count", userId] });
+      await queryClient.cancelQueries({ queryKey: ["cart-details", userId] });
 
-      const previousCount = queryClient.getQueryData<number>(["cart-count"]);
+      const previousCount = queryClient.getQueryData<number>([
+        "cart-count",
+        userId,
+      ]);
       const previousDetails = queryClient.getQueryData<
         ICart & { items: (ICartItem | IPopulatedCartItem)[] }
-      >(["cart-details"]);
+      >(["cart-details", userId]);
 
       // Optimistically update details and count
       if (previousDetails?.items) {
@@ -117,10 +135,8 @@ export function useCart() {
         );
 
         if (item) {
-          const qtyDiff = updatedItem.quantity - item.itemQuantity;
-
           // Update details
-          queryClient.setQueryData(["cart-details"], {
+          queryClient.setQueryData(["cart-details", userId], {
             ...previousDetails,
             items: previousDetails.items.map(
               (i: ICartItem | IPopulatedCartItem) => {
@@ -135,11 +151,7 @@ export function useCart() {
             ),
           });
 
-          // Update count
-          queryClient.setQueryData(
-            ["cart-count"],
-            (old: number = 0) => old + qtyDiff,
-          );
+          /* Unique count logic: quantity change doesn't affect cart-count badge */
         }
       }
 
@@ -147,14 +159,17 @@ export function useCart() {
     },
     onError: (err, newItem, context) => {
       if (context) {
-        queryClient.setQueryData(["cart-count"], context.previousCount);
-        queryClient.setQueryData(["cart-details"], context.previousDetails);
+        queryClient.setQueryData(["cart-count", userId], context.previousCount);
+        queryClient.setQueryData(
+          ["cart-details", userId],
+          context.previousDetails,
+        );
       }
       toast.error("কোয়ান্টিটি আপডেট করা যায়নি");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["cart-count"] });
-      queryClient.invalidateQueries({ queryKey: ["cart-details"] });
+      queryClient.invalidateQueries({ queryKey: ["cart-count", userId] });
+      queryClient.invalidateQueries({ queryKey: ["cart-details", userId] });
     },
   });
 
@@ -166,13 +181,16 @@ export function useCart() {
       return removeFromCart(formData);
     },
     onMutate: async ({ productId }) => {
-      await queryClient.cancelQueries({ queryKey: ["cart-count"] });
-      await queryClient.cancelQueries({ queryKey: ["cart-details"] });
+      await queryClient.cancelQueries({ queryKey: ["cart-count", userId] });
+      await queryClient.cancelQueries({ queryKey: ["cart-details", userId] });
 
-      const previousCount = queryClient.getQueryData<number>(["cart-count"]);
+      const previousCount = queryClient.getQueryData<number>([
+        "cart-count",
+        userId,
+      ]);
       const previousDetails = queryClient.getQueryData<
         ICart & { items: (ICartItem | IPopulatedCartItem)[] }
-      >(["cart-details"]);
+      >(["cart-details", userId]);
 
       if (previousDetails?.items) {
         const itemToRemove = previousDetails.items.find(
@@ -187,7 +205,7 @@ export function useCart() {
 
         if (itemToRemove) {
           // Update details by removing item
-          queryClient.setQueryData(["cart-details"], {
+          queryClient.setQueryData(["cart-details", userId], {
             ...previousDetails,
             items: previousDetails.items.filter(
               (i: ICartItem | IPopulatedCartItem) => {
@@ -200,9 +218,9 @@ export function useCart() {
             ),
           });
 
-          // Update count
-          queryClient.setQueryData(["cart-count"], (old: number = 0) =>
-            Math.max(0, old - itemToRemove.itemQuantity),
+          // Update count (unique item removed)
+          queryClient.setQueryData(["cart-count", userId], (old: number = 0) =>
+            Math.max(0, old - 1),
           );
         }
       }
@@ -216,14 +234,17 @@ export function useCart() {
     },
     onError: (err, newItem, context) => {
       if (context) {
-        queryClient.setQueryData(["cart-count"], context.previousCount);
-        queryClient.setQueryData(["cart-details"], context.previousDetails);
+        queryClient.setQueryData(["cart-count", userId], context.previousCount);
+        queryClient.setQueryData(
+          ["cart-details", userId],
+          context.previousDetails,
+        );
       }
       toast.error("রিমুভ করা সম্ভব হয়নি");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["cart-count"] });
-      queryClient.invalidateQueries({ queryKey: ["cart-details"] });
+      queryClient.invalidateQueries({ queryKey: ["cart-count", userId] });
+      queryClient.invalidateQueries({ queryKey: ["cart-details", userId] });
     },
   });
 

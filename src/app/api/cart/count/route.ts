@@ -33,8 +33,8 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json({ count });
+    return NextResponse.json({ count, totalQuantity: count });
   } catch {
-    return NextResponse.json({ count: 0 });
+    return NextResponse.json({ count: 0, totalQuantity: 0 });
   }
 }

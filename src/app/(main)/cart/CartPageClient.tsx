@@ -22,17 +22,8 @@ import { IPopulatedCartItem } from "@/types/cart";
 export default function CartPageClient() {
   const { cart, updateQty, removeItem, isLoadingCart } = useCart();
 
-  // 🛡️ 100% Type-Safe Category Helper
-  type ProductWithCategory = IPopulatedCartItem["product"] & {
-    category?: unknown;
-  };
-
-  const getCategorySlug = (product: ProductWithCategory): string => {
-    const cat = product.category;
-    if (typeof cat === "object" && cat !== null && "slug" in cat) {
-      return (cat as { slug: string }).slug;
-    }
-    return "uncategorized";
+  const getCategorySlug = (product: IPopulatedCartItem["product"]): string => {
+    return product.category?.slug || "uncategorized";
   };
 
   if (isLoadingCart) {

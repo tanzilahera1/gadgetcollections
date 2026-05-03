@@ -13,10 +13,15 @@ import { ICartItem, IPopulatedCartItem } from "@/types/cart";
 
 interface ProductActionsProps {
   productId: string;
+  productTitle: string;
   stock: number;
 }
 
-export function ProductActions({ productId, stock }: ProductActionsProps) {
+export function ProductActions({
+  productId,
+  productTitle,
+  stock,
+}: ProductActionsProps) {
   const {
     addToCart,
     isAdding,
@@ -25,6 +30,7 @@ export function ProductActions({ productId, stock }: ProductActionsProps) {
     isUpdating,
     removeItem,
     isRemoving,
+    isLoadingCart,
   } = useCart();
   const router = useRouter();
 
@@ -46,7 +52,7 @@ export function ProductActions({ productId, stock }: ProductActionsProps) {
   const [localQty, setLocalQty] = useState(1);
   const displayQty = isInCart ? currentQtyInCart : localQty;
 
-  const isActionPending = isAdding || isUpdating || isRemoving;
+  const isActionPending = isAdding || isUpdating || isRemoving || isLoadingCart;
   const isDisabled = isActionPending || stock <= 0;
 
   const handleQtyChange = (newQty: number) => {
@@ -78,11 +84,11 @@ export function ProductActions({ productId, stock }: ProductActionsProps) {
       {
         onSuccess: (data: { success?: boolean }) => {
           if (data?.success) {
-            toast.success("কার্টে যোগ করা হয়েছে 🛒", {
-              description: "পণ্যটি সফলভাবে যোগ করা হয়েছে।",
+            toast.success(`${productTitle} কার্টে যোগ করা হয়েছে!`, {
+              icon: <ShoppingCart className="size-4" />,
               action: {
                 label: "চেকআউট",
-                onClick: () => router.push("/checkout"),
+                onClick: () => router.push("/cart"),
               },
             });
           }
