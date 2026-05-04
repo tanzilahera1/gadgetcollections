@@ -260,8 +260,8 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-border/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
           <p>
-            © {new Date().getFullYear()} GadgetCollections. Developed with ❤️ in
-            Bangladesh.
+            © {new Date().toLocaleString("en-US", { year: "numeric" })}{" "}
+            GadgetCollections. Developed with ❤️ in Bangladesh.
           </p>
           <div className="flex gap-6">
             <LinkNext

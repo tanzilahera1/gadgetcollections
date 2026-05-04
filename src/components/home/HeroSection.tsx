@@ -5,27 +5,13 @@ import Link from "next/link";
 import Autoplay from "embla-carousel-autoplay";
 import useEmblaCarousel from "embla-carousel-react";
 import { ChevronLeft, ChevronRight, Loader2, ShoppingCart } from "lucide-react";
-import {
-  useCallback,
-  useEffect,
-  useState,
-  useMemo,
-  useSyncExternalStore,
-} from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { IProduct } from "@/types/product";
 import { ICartItem, IPopulatedCartItem } from "@/types/cart";
 import { formatPrice, calculateDiscount } from "@/lib/priceUtils";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-
-function useIsClient() {
-  return useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  );
-}
 
 interface HeroSectionProps {
   featuredProducts: IProduct[];
@@ -34,7 +20,11 @@ interface HeroSectionProps {
 export default function HeroSection({ featuredProducts }: HeroSectionProps) {
   const { addToCart, cart } = useCart();
   const [addingId, setAddingId] = useState<string | null>(null);
-  const isClient = useIsClient();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const plugins = useMemo(() => {
     if (!isClient) return [];
