@@ -40,13 +40,13 @@ const FOOTER_DATA = {
     {
       label: "Instagram",
       Icon: InstagramIcon,
-      href: "https://www.instagram.com/mest_school/",
+      href: "https://www.instagram.com/gadgetcollectionsbd/",
       brandColor: "#E4405F",
     },
     {
       label: "WhatsApp",
       Icon: WhatsAppIcon,
-      href: "https://wa.me/8801540505122",
+      href: "https://wa.me/8801568390014",
       brandColor: "#25D366",
     },
     {
@@ -58,13 +58,13 @@ const FOOTER_DATA = {
     {
       label: "YouTube",
       Icon: YouTubeIcon,
-      href: "https://www.youtube.com/@mestschool",
+      href: "https://www.youtube.com/@gadgetcollectionsbd",
       brandColor: "#FF0000",
     },
     {
       label: "TikTok",
       Icon: TikTokIcon,
-      href: "https://www.tiktok.com/@mestschool",
+      href: "https://www.tiktok.com/@gadgetcollectionsbd",
       brandColor: "#000000",
     },
   ],

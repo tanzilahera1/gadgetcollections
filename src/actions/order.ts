@@ -149,7 +149,7 @@ export async function createOrder(formData: FormData) {
   // Notifications
   await sendDiscordOrder(newOrder.toObject());
   await sendTelegramMessage(
-    `🛍️ New Order: ${orderNumber}\nTotal: ৳${total}\nPhone: ${validated.data.phone}`,
+    `🛍️ *New Order: ${orderNumber}*\n\n💰 *Total:* ৳${total}\n📞 *Phone:* ${validated.data.phone}`,
   );
 
   return { orderNumber };

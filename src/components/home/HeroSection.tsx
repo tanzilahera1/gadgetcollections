@@ -5,7 +5,7 @@ import Link from "next/link";
 import Autoplay from "embla-carousel-autoplay";
 import useEmblaCarousel from "embla-carousel-react";
 import { ChevronLeft, ChevronRight, Loader2, ShoppingCart } from "lucide-react";
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo, useSyncExternalStore } from "react";
 import { IProduct } from "@/types/product";
 import { ICartItem, IPopulatedCartItem } from "@/types/cart";
 import { formatPrice, calculateDiscount } from "@/lib/priceUtils";
@@ -17,14 +17,17 @@ interface HeroSectionProps {
   featuredProducts: IProduct[];
 }
 
+const emptySubscribe = () => () => {};
+
 export default function HeroSection({ featuredProducts }: HeroSectionProps) {
   const { addToCart, cart } = useCart();
   const [addingId, setAddingId] = useState<string | null>(null);
-  const [isClient, setIsClient] = useState(false);
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  const isClient = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
 
   const plugins = useMemo(() => {
     if (!isClient) return [];
@@ -143,6 +146,7 @@ export default function HeroSection({ featuredProducts }: HeroSectionProps) {
                   if (isInCart) {
                     toast.info("ইতিমধ্যে এই প্রোডাক্ট কার্টে যোগ করা হয়েছে।", {
                       icon: <ShoppingCart className="size-4" />,
+                      duration: 1000,
                     });
                     return;
                   }
@@ -156,7 +160,7 @@ export default function HeroSection({ featuredProducts }: HeroSectionProps) {
                     {
                       onSuccess: (data: { success?: boolean }) => {
                         if (data?.success) {
-                          toast.success("কার্টে যোগ হয়েছে!");
+                          toast.success("কার্টে যোগ হয়েছে!", { duration: 1000 });
                         }
                       },
                       onSettled: () => setAddingId(null),

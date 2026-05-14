@@ -288,7 +288,7 @@ export default function NavbarClient() {
       <div className="fixed bottom-20 right-4 z-40 flex flex-col gap-3">
         {/* WhatsApp Button */}
         <Link
-          href="https://wa.me/8801540505122"
+          href="https://wa.me/8801568390014"
           target="_blank"
           rel="noopener noreferrer"
           className="flex size-11 items-center justify-center rounded-full bg-[#25D366]/20 backdrop-blur-xl border border-[#25D366]/30 text-[#25D366] shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 hover:bg-[#25D366]/30 group"
