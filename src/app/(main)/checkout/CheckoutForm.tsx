@@ -660,7 +660,7 @@ export function CheckoutForm({ cart, user }: CheckoutFormProps) {
                 কেনাকাটা চালিয়ে যান
               </Button>
             </Link>
-            <Link href="/dashboard/orders" className="block w-full">
+            <Link href="/dashboard/my-orders" className="block w-full">
               <Button
                 variant="outline"
                 className="w-full h-12 rounded-xl text-base font-bold border-border/60"

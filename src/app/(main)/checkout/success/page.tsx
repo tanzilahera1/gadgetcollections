@@ -2,14 +2,21 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, ShoppingBag, Truck, Phone, MessageSquare, ArrowRight } from "lucide-react";
+import {
+  CheckCircle2,
+  ShoppingBag,
+  Truck,
+  Phone,
+  MessageSquare,
+  ArrowRight,
+} from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
   const orderNumber = searchParams.get("orderNumber");
- 
+
   return (
     <div className="container mx-auto px-4 py-20">
       <div className="max-w-2xl mx-auto text-center space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
@@ -17,16 +24,23 @@ function SuccessContent() {
           <div className="size-24 rounded-full bg-green-500/10 flex items-center justify-center text-green-600 animate-pulse">
             <CheckCircle2 className="size-12" />
           </div>
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight">অর্ডার সফল হয়েছে!</h1>
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight">
+            অর্ডার সফল হয়েছে!
+          </h1>
           <p className="text-lg text-muted-foreground max-w-md mx-auto">
-            আপনার পছন্দের গ্যাজেটগুলো এখন আমাদের হাতে। খুব শীঘ্রই আমাদের একজন প্রতিনিধি আপনার সাথে যোগাযোগ করবেন।
+            আপনার পছন্দের গ্যাজেটগুলো এখন আমাদের হাতে। খুব শীঘ্রই আমাদের একজন
+            প্রতিনিধি আপনার সাথে যোগাযোগ করবেন।
           </p>
         </div>
 
         {orderNumber && (
           <div className="bg-card/40 backdrop-blur-xl border border-border/40 p-6 rounded-3xl inline-block shadow-sm">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">অর্ডার নম্বর</p>
-            <p className="text-2xl font-black text-primary font-mono tracking-tighter">{orderNumber}</p>
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">
+              অর্ডার নম্বর
+            </p>
+            <p className="text-2xl font-black text-primary font-mono tracking-tighter">
+              {orderNumber}
+            </p>
           </div>
         )}
 
@@ -45,13 +59,20 @@ function SuccessContent() {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
           <Link href="/products" className="w-full sm:w-auto">
-            <Button size="lg" variant="outline" className="w-full rounded-2xl h-14 px-8 border-primary/20 hover:bg-primary/5">
+            <Button
+              size="lg"
+              variant="outline"
+              className="w-full rounded-2xl h-14 px-8 border-primary/20 hover:bg-primary/5"
+            >
               <ShoppingBag className="mr-2 size-5" />
               আরো কেনাকাটা করুন
             </Button>
           </Link>
-          <Link href="/dashboard/orders" className="w-full sm:w-auto">
-            <Button size="lg" className="w-full rounded-2xl h-14 px-8 shadow-xl shadow-primary/20 group">
+          <Link href="/dashboard/my-orders" className="w-full sm:w-auto">
+            <Button
+              size="lg"
+              className="w-full rounded-2xl h-14 px-8 shadow-xl shadow-primary/20 group"
+            >
               অর্ডার স্ট্যাটাস দেখুন
               <ArrowRight className="ml-2 size-5 transition-transform group-hover:translate-x-1" />
             </Button>
@@ -59,7 +80,10 @@ function SuccessContent() {
         </div>
 
         <div className="pt-10 flex items-center justify-center gap-6">
-          <Link href="#" className="text-xs font-bold text-muted-foreground flex items-center gap-1.5 hover:text-primary transition-colors">
+          <Link
+            href="#"
+            className="text-xs font-bold text-muted-foreground flex items-center gap-1.5 hover:text-primary transition-colors"
+          >
             <MessageSquare className="size-4" />
             WhatsApp Support
           </Link>
@@ -71,7 +95,11 @@ function SuccessContent() {
 
 export default function CheckoutSuccessPage() {
   return (
-    <Suspense fallback={<div className="container mx-auto px-4 py-20 text-center">লোডিং...</div>}>
+    <Suspense
+      fallback={
+        <div className="container mx-auto px-4 py-20 text-center">লোডিং...</div>
+      }
+    >
       <SuccessContent />
     </Suspense>
   );

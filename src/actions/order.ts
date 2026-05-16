@@ -153,7 +153,7 @@ export async function createOrder(formData: FormData) {
   );
 
   revalidatePath("/admin/orders");
-  revalidatePath("/dashboard/orders");
+  revalidatePath("/dashboard/my-orders");
 
   return { orderNumber };
 }

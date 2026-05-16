@@ -26,7 +26,7 @@ const FOOTER_DATA = {
   ],
   account: [
     { label: "আমার প্রোফাইল", href: "/dashboard" },
-    { label: "অর্ডার হিস্টোরি", href: "/dashboard/orders" },
+    { label: "অর্ডার হিস্টোরি", href: "/dashboard/my-orders" },
     { label: "উইশলিস্ট", href: "/wishlist" },
     { label: "লগইন", href: "/login" },
   ],

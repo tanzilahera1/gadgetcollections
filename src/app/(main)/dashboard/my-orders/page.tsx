@@ -1,4 +1,4 @@
-// src/app/(main)/dashboard/orders/page.tsx
+// src/app/(main)/dashboard/my-orders/page.tsx
 import { auth } from "@/auth";
 import Order from "@/models/Order";
 import { dbConnect } from "@/lib/db";
@@ -68,7 +68,7 @@ export default async function UserOrdersPage() {
   const session = await auth();
 
   if (!session?.user) {
-    redirect("/login?callbackUrl=/dashboard/orders");
+    redirect("/login?callbackUrl=/dashboard/my-orders");
   }
 
   const orders = await getUserOrders(session.user.id!);
@@ -232,7 +232,7 @@ export default async function UserOrdersPage() {
 
                 <div className="flex items-center gap-4 w-full sm:w-auto">
                   <Link
-                    href={`/dashboard/orders/${order._id}`}
+                    href={`/dashboard/my-orders/${order._id}`}
                     className="w-full sm:w-auto"
                   >
                     <button className="w-full flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-900 font-black tracking-tight px-6 py-3 rounded-2xl border border-slate-200 transition-all group">

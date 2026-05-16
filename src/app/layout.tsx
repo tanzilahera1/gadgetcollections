@@ -1,14 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Hind_Siliguri } from "next/font/google";
+import { Noto_Serif_Bengali } from "next/font/google";
 import "@/styles/globals.css";
 
 import { Providers } from "@/components/providers/Providers";
 import { ToastProvider } from "@/components/ui/toast-provider";
 
-const hindSiliguri = Hind_Siliguri({
-  weight: ["300", "400", "500", "600", "700"],
+const notoSerifBengali = Noto_Serif_Bengali({
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
   subsets: ["latin", "bengali"],
-  variable: "--font-hind",
+  variable: "--font-noto-serif-bengali",
   display: "swap",
 });
 
@@ -148,7 +148,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`h-full antialiased ${hindSiliguri.variable} font-sans`}
+      className={`h-full antialiased ${notoSerifBengali.variable} font-sans`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">

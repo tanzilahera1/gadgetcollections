@@ -6,28 +6,55 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const orderId = searchParams.get("orderId");
-    const phone = searchParams.get("phone");
 
-    if (!orderId || !phone) {
-      return NextResponse.json({ success: false, error: "Missing parameters" }, { status: 400 });
+    if (!orderId) {
+      return NextResponse.json(
+        { success: false, error: "Order ID প্রয়োজন" },
+        { status: 400 },
+      );
     }
 
     await dbConnect();
 
-    // Find order by orderNumber (string from client, but we might store as number or string)
-    // We also verify the phone number for basic security
-    const order = await Order.findOne({ 
-      orderNumber: orderId,
-      "shipping.phone": phone
-    }).lean();
+    // Extract only digits from input (removes #, ORD, -, spaces, etc.)
+    const inputDigits = orderId.replace(/\D/g, "");
 
-    if (!order) {
-      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 });
+    if (!inputDigits || inputDigits.length < 8) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Order ID এর ফরম্যাট সঠিক নয়",
+        },
+        { status: 400 },
+      );
     }
 
-    return NextResponse.json({ success: true, order });
+    // Find all orders and compare digits
+    const allOrders = await Order.find({}).lean();
+
+    const matchedOrder = allOrders.find((order) => {
+      // Extract digits from stored order number
+      const dbDigits = order.orderNumber.replace(/\D/g, "");
+      return dbDigits === inputDigits;
+    });
+
+    if (!matchedOrder) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Order খুঁজে পাওয়া যায়নি। আপনার Order ID চেক করে আবার চেষ্টা করুন।",
+        },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json({ success: true, order: matchedOrder });
   } catch (error) {
     console.error("Order tracking error:", error);
-    return NextResponse.json({ success: false, error: "Server error" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: "Server error" },
+      { status: 500 },
+    );
   }
 }

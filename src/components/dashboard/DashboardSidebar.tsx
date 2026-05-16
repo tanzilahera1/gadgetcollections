@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 
 const DASHBOARD_LINKS = [
   { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
-  { label: "My Orders", href: "/dashboard/orders", icon: ShoppingBag },
+  { label: "My Orders", href: "/dashboard/my-orders", icon: ShoppingBag },
   { label: "Profile", href: "/dashboard/profile", icon: User },
   { label: "Addresses", href: "/dashboard/addresses", icon: MapPin },
   { label: "Payment History", href: "/dashboard/payments", icon: History },
