@@ -15,6 +15,7 @@ import {
   Smartphone,
   Info,
   Copy,
+  Truck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StatusUpdater } from "@/components/admin/StatusUpdater";
@@ -222,29 +223,45 @@ export default async function OrderDetailsPage({
                 </div>
                 <div>
                   <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-0.5">
-                    NAME
+                    NAME (RECEIVER)
                   </p>
                   <p className="text-base font-black text-slate-900">
                     {order.shipping.name}
                   </p>
                 </div>
               </div>
-              <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                <div className="size-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
+
+              {/* Customer Phone - Primary Contact */}
+              <div className="flex items-start gap-4 p-4 rounded-2xl bg-primary/5 border border-primary/20">
+                <div className="size-10 rounded-xl bg-white border border-primary/20 flex items-center justify-center text-primary shrink-0">
                   <Phone className="size-5" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-0.5">
-                    PHONE NUMBER
+                  <p className="text-[10px] font-black uppercase text-primary tracking-widest mb-0.5">
+                    CUSTOMER PHONE (CALL TO CONFIRM)
                   </p>
                   <p className="text-base font-black text-slate-900">
-                    {order.shipping.phone}
+                    {order.customerPhone || order.shipping.phone}
                   </p>
-                  <button className="text-[10px] font-bold text-primary flex items-center gap-1 mt-1 hover:underline">
-                    <Copy className="size-2.5" /> Call Customer
-                  </button>
                 </div>
               </div>
+
+              {/* Shipping Phone - Delivery Contact */}
+              {order.customerPhone && order.customerPhone !== order.shipping.phone && (
+                <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                  <div className="size-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
+                    <Truck className="size-5" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-0.5">
+                      RECEIVER PHONE (FOR DELIVERY)
+                    </p>
+                    <p className="text-base font-black text-slate-900">
+                      {order.shipping.phone}
+                    </p>
+                  </div>
+                </div>
+              )}
               <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
                 <div className="size-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
                   <MapPin className="size-5" />

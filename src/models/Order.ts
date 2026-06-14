@@ -32,6 +32,7 @@ const OrderSchema = new Schema<IOrder>(
   {
     orderNumber: { type: String, required: true, unique: true },
     user: { type: Schema.Types.ObjectId, ref: "User" },
+    customerPhone: { type: String, required: true, trim: true },
     items: { type: [OrderItemSchema], required: true },
     shipping: { type: OrderShippingSchema, required: true },
     subtotal: { type: Number, required: true, min: 0 },
@@ -84,6 +85,7 @@ OrderSchema.index({ user: 1 });
 OrderSchema.index({ orderStatus: 1 });
 OrderSchema.index({ paymentStatus: 1 });
 OrderSchema.index({ createdAt: -1 });
+OrderSchema.index({ customerPhone: 1 });
 OrderSchema.index({ "shipping.phone": 1 });
 
 export default models.Order || model<IOrder>("Order", OrderSchema);

@@ -2,6 +2,7 @@
 import { auth } from "@/auth";
 import { cookies } from "next/headers";
 import Cart from "@/models/Cart";
+import Product from "@/models/Product"; // Fix MissingSchemaError
 import { dbConnect } from "@/lib/db";
 import { CheckoutForm } from "./CheckoutForm";
 import { redirect } from "next/navigation";
@@ -17,6 +18,10 @@ type PopulatedCartDoc = Document &
 
 export default async function CheckoutPage() {
   await dbConnect();
+  
+  // Force Turbopack to keep the Product model import
+  if (!Product) throw new Error("Product model missing");
+
   const session = await auth();
   const cookieStore = await cookies();
   const guestSessionId = cookieStore.get("cart_session_id")?.value;

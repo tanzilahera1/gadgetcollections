@@ -13,9 +13,13 @@ import {
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
+import { useSession } from "next-auth/react";
+import { AccountClaimForm } from "./AccountClaimForm";
+
 function SuccessContent() {
   const searchParams = useSearchParams();
-  const orderNumber = searchParams.get("orderNumber");
+  const orderNumber = searchParams.get("order");
+  const { data: session } = useSession();
 
   return (
     <div className="container mx-auto px-4 py-20">
@@ -28,8 +32,7 @@ function SuccessContent() {
             অর্ডার সফল হয়েছে!
           </h1>
           <p className="text-lg text-muted-foreground max-w-md mx-auto">
-            আপনার পছন্দের গ্যাজেটগুলো এখন আমাদের হাতে। খুব শীঘ্রই আমাদের একজন
-            প্রতিনিধি আপনার সাথে যোগাযোগ করবেন।
+            আপনার অর্ডারটি সফলভাবে রিসিভ করা হয়েছে এবং বর্তমানে Pending অবস্থায় আছে। আমাদের প্রতিনিধি খুব শীঘ্রই আপনাকে কল করে অর্ডারটি কনফার্ম করবেন।
           </p>
         </div>
 
@@ -43,19 +46,6 @@ function SuccessContent() {
             </p>
           </div>
         )}
-
-        <div className="grid sm:grid-cols-2 gap-4 max-w-lg mx-auto pt-6">
-          <div className="p-5 rounded-2xl border border-border/40 bg-card/20 flex flex-col items-center gap-3">
-            <Truck className="size-6 text-primary" />
-            <div className="text-sm font-bold">২৪-৭২ ঘণ্টা</div>
-            <p className="text-xs text-muted-foreground">ডেলিভারি সময়</p>
-          </div>
-          <div className="p-5 rounded-2xl border border-border/40 bg-card/20 flex flex-col items-center gap-3">
-            <Phone className="size-6 text-primary" />
-            <div className="text-sm font-bold">০১৮XXXXXXXX</div>
-            <p className="text-xs text-muted-foreground">যেকোনো প্রয়োজনে</p>
-          </div>
-        </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
           <Link href="/products" className="w-full sm:w-auto">
@@ -78,6 +68,11 @@ function SuccessContent() {
             </Button>
           </Link>
         </div>
+
+        {/* Account Claiming Form for Guest Users */}
+        {!session && orderNumber && (
+          <AccountClaimForm orderNumber={orderNumber} />
+        )}
 
         <div className="pt-10 flex items-center justify-center gap-6">
           <Link

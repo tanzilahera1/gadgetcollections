@@ -32,6 +32,7 @@ export interface IOrderShipping {
 export interface IOrderBase {
   orderNumber: string;
   user?: ID;
+  customerPhone: string; // The primary contact number for the order
   items: IOrderItem[];
   shipping: IOrderShipping;
   subtotal: Price;

@@ -45,6 +45,9 @@ const CheckoutSchema = z
   .object({
     name: z.string().min(3, "নাম কমপক্ষে ৩ অক্ষর হওয়া উচিত"),
     phone: z.string().regex(/^01[3-9]\d{8}$/, "সঠিক ফোন নম্বর দিন"),
+    isGift: z.boolean().optional(),
+    receiverName: z.string().optional(),
+    receiverPhone: z.string().optional(),
     addressLine1: z.string().min(5, "বিস্তারিত ঠিকানা দিন"),
     deliveryArea: z.enum(["dhaka", "outside"] as const),
     paymentMethod: z.enum(["cod", "mobile"] as const),
@@ -125,6 +128,9 @@ export function CheckoutForm({ cart, user }: CheckoutFormProps) {
     defaultValues: {
       name: user?.name || "",
       phone: user?.phone || "",
+      isGift: false,
+      receiverName: "",
+      receiverPhone: "",
       deliveryArea: "dhaka",
       paymentMethod: "cod",
       paymentProvider: "bkash",
@@ -149,6 +155,7 @@ export function CheckoutForm({ cart, user }: CheckoutFormProps) {
     }
   }, [setValue]);
 
+  const isGift = useWatch({ control, name: "isGift" });
   const deliveryArea = useWatch({ control, name: "deliveryArea" });
   const paymentMethod = useWatch({ control, name: "paymentMethod" });
   const paymentProvider = useWatch({
@@ -166,20 +173,16 @@ export function CheckoutForm({ cart, user }: CheckoutFormProps) {
   };
 
   const onSubmit = async (data: CheckoutValues) => {
-    // যদি লগিন না থাকে, তবে ডাটা সেভ করে লগিন পেইজে পাঠাও
-    if (!session) {
-      toast.info("অর্ডার কনফার্ম করতে দয়া করে লগইন করুন।");
-      sessionStorage.setItem("checkout_form_data", JSON.stringify(data));
-      router.push(`/login?callbackUrl=${encodeURIComponent("/checkout")}`);
-      return;
-    }
-
     setIsSubmitting(true);
     try {
       const formData = new FormData();
       (Object.keys(data) as Array<keyof CheckoutValues>).forEach((key) => {
         const value = data[key];
-        if (value) formData.append(key, value);
+        if (typeof value === "boolean") {
+          if (value) formData.append(key, "true");
+        } else if (value !== undefined && value !== null && value !== "") {
+          formData.append(key, value);
+        }
       });
       formData.append(
         "district",
@@ -188,11 +191,12 @@ export function CheckoutForm({ cart, user }: CheckoutFormProps) {
 
       const result = await createOrder(formData);
       if (result && "orderNumber" in result) {
-        setOrderId(result.orderNumber as string);
-        setShowSuccessModal(true);
         // Immediately clear cart badge & details from React Query cache
         queryClient.invalidateQueries({ queryKey: ["cart-count"] });
         queryClient.invalidateQueries({ queryKey: ["cart-details"] });
+        router.push(`/checkout/success?order=${result.orderNumber}`);
+      } else if (result && result.error) {
+        toast.error("কিছু ভুল হয়েছে, দয়া করে আবার চেষ্টা করুন।");
       }
     } catch {
       toast.error("কিছু ভুল হয়েছে।");
@@ -203,6 +207,20 @@ export function CheckoutForm({ cart, user }: CheckoutFormProps) {
 
   return (
     <div className="max-w-6xl mx-auto py-4">
+      {!session && (
+        <div className="mb-8 p-4 bg-primary/5 border border-primary/20 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <h3 className="font-bold text-lg">অর্ডারটি দ্রুত করতে চান?</h3>
+            <p className="text-sm text-muted-foreground">Google দিয়ে লগিন করলে আপনার নাম ও ইমেইল অটো-ফিলাপ হয়ে যাবে।</p>
+          </div>
+          <Link href={`/login?callbackUrl=${encodeURIComponent("/checkout")}`}>
+            <Button type="button" variant="outline" className="shrink-0 gap-2 font-bold border-primary/20 hover:bg-primary/10">
+              <User className="size-4" />
+              Google দিয়ে লগিন করুন
+            </Button>
+          </Link>
+        </div>
+      )}
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="grid lg:grid-cols-12 gap-6 lg:gap-10"
@@ -237,7 +255,7 @@ export function CheckoutForm({ cart, user }: CheckoutFormProps) {
               </div>
               <div className="space-y-2">
                 <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
-                  মোবাইল নম্বর
+                  আপনার মোবাইল নম্বর (অর্ডার কনফার্ম করার জন্য)
                 </Label>
                 <Input
                   {...register("phone")}
@@ -250,6 +268,43 @@ export function CheckoutForm({ cart, user }: CheckoutFormProps) {
                   </p>
                 )}
               </div>
+              <div className="md:col-span-2">
+                <label className="flex items-center gap-3 p-4 border border-border/40 rounded-xl cursor-pointer hover:bg-card/40 transition-colors">
+                  <input
+                    type="checkbox"
+                    {...register("isGift")}
+                    className="size-5 rounded border-border/40 text-primary focus:ring-primary"
+                  />
+                  <div>
+                    <p className="font-bold text-sm">পার্সেলটি অন্য কেউ রিসিভ করবেন?</p>
+                    <p className="text-xs text-muted-foreground">ডেলিভারি রিসিভারের নাম ও নম্বর আলাদা দিন</p>
+                  </div>
+                </label>
+              </div>
+              {isGift && (
+                <>
+                  <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
+                      রিসিভারের নাম
+                    </Label>
+                    <Input
+                      {...register("receiverName")}
+                      placeholder="যিনি পার্সেল রিসিভ করবেন"
+                      className="h-12 rounded-xl bg-background/50 text-base"
+                    />
+                  </div>
+                  <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
+                      রিসিভারের মোবাইল নম্বর
+                    </Label>
+                    <Input
+                      {...register("receiverPhone")}
+                      placeholder="ডেলিভারিম্যান এই নাম্বারে কল করবে"
+                      className="h-12 rounded-xl bg-background/50 text-base"
+                    />
+                  </div>
+                </>
+              )}
               <div className="md:col-span-2 space-y-2">
                 <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
                   বিস্তারিত ঠিকানা
@@ -631,7 +686,7 @@ export function CheckoutForm({ cart, user }: CheckoutFormProps) {
             </div>
           </div>
         </div>
-      </form>
+      </form> 
 
       {/* Success Modal — closing redirects to /products since cart is empty */}
       <Dialog

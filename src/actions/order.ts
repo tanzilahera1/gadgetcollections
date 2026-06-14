@@ -1,167 +1,212 @@
+// src/actions/order.ts
 "use server";
-
 import { z } from "zod";
-import { auth } from "@/auth";
-import { dbConnect } from "@/lib/db";
+
 import Order from "@/models/Order";
+import Product from "@/models/Product";
 import Cart from "@/models/Cart";
+import { sendMetaEvent, getFbCookies } from "@/lib/meta-capi";
+import { auth } from "@/auth"; // getServerSession না, auth()
+import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import type { IProduct } from "@/types/product";
+import type { Document } from "mongoose";
+import { dbConnect } from "@/lib/db";
 import { sendDiscordOrder } from "@/lib/discord";
 import { sendTelegramMessage } from "@/lib/telegram";
-import { sendMetaEvent, hashPhone } from "@/lib/meta-capi";
-import { cookies, headers } from "next/headers";
-import { revalidatePath } from "next/cache";
 
-const CheckoutSchema = z.object({
-  name: z.string().min(3, "নাম কমপক্ষে ৩ অক্ষর হওয়া উচিত"),
+const CreateOrderSchema = z.object({
+  name: z.string().min(3, "নাম কমপক্ষে 3 অক্ষর"),
   phone: z.string().regex(/^01[3-9]\d{8}$/, "সঠিক ফোন নম্বর দিন"),
-  district: z.string().min(1, "জেলা সিলেক্ট করুন"),
-  addressLine1: z.string().min(5, "বিস্তারিত ঠিকানা দিন"),
+  isGift: z.boolean().optional(),
+  receiverName: z.string().optional(),
+  receiverPhone: z.string().optional(),
+  addressLine1: z.string().min(5, "ঠিকানা কমপক্ষে 5 অক্ষর"),
+  addressLine2: z.string().optional(),
+  city: z.string().optional(),
+  district: z.string().min(2),
   postalCode: z.string().optional(),
-  deliveryArea: z.enum(["dhaka", "outside"]),
   paymentMethod: z.enum(["cod", "mobile"]),
-  paymentProvider: z.enum(["bkash", "nagad", "rocket"]).optional(),
-  senderNumber: z.string().optional(),
   transactionId: z.string().optional(),
   customerNotes: z.string().optional(),
 });
 
-function generateOrderNumber() {
-  const d = new Date();
-  const dateObj =
-    d.getFullYear().toString() +
-    (d.getMonth() + 1).toString().padStart(2, "0") +
-    d.getDate().toString().padStart(2, "0");
-  const randomStr = Math.floor(1000 + Math.random() * 9000).toString();
-  return `ORD-${dateObj}-${randomStr}`;
+function generateOrderNumber(): string {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const random = Math.floor(Math.random() * 9000) + 1000;
+  return `ORD-${year}${month}${day}-${random}`;
 }
 
 export async function createOrder(formData: FormData) {
-  const rawData = Object.fromEntries(formData.entries());
-  const validated = CheckoutSchema.safeParse(rawData);
+  const session = await auth(); // getServerSession এর বদলে auth()
+  await dbConnect();
+
+  const validated = CreateOrderSchema.safeParse({
+    name: formData.get("name"),
+    phone: formData.get("phone"),
+    isGift: formData.get("isGift") === "true",
+    receiverName: formData.get("receiverName") || undefined,
+    receiverPhone: formData.get("receiverPhone") || undefined,
+    addressLine1: formData.get("addressLine1"),
+    addressLine2: formData.get("addressLine2") || undefined,
+    city: formData.get("city") || undefined,
+    district: formData.get("district"),
+    postalCode: formData.get("postalCode") || undefined,
+    paymentMethod: formData.get("paymentMethod"),
+    transactionId: formData.get("transactionId") || undefined,
+    customerNotes: formData.get("customerNotes") || undefined,
+  });
 
   if (!validated.success) {
-    return {
-      error: "ভ্যালিডেশন এরর",
-      details: validated.error.flatten(),
-    };
+    return { error: validated.error.flatten().fieldErrors };
   }
 
-  await dbConnect();
-  const session = await auth();
-  const cookieStore = await cookies();
+  const data = validated.data;
+
+  const userId = session?.user?.id;
+  const cookieStore = await cookies(); // Next.js 15+ এ await লাগবে
   const guestSessionId = cookieStore.get("cart_session_id")?.value;
 
-  let cart = null;
-  if (session?.user?.id) {
-    cart = await Cart.findOne({ user: session.user.id }).populate(
-      "items.product",
-    );
-  } else if (guestSessionId) {
-    cart = await Cart.findOne({ sessionId: guestSessionId }).populate(
-      "items.product",
-    );
-  }
+  const cart = await Cart.findOne(
+    userId ? { user: userId } : { sessionId: guestSessionId },
+  ).populate("items.product");
 
-  if (!cart || cart.items.length === 0) return { error: "Cart is empty" };
+  if (!cart || cart.items.length === 0) {
+    return { error: { cart: ["কার্ট খালি"] } };
+  }
 
   let subtotal = 0;
   const orderItems = [];
 
   for (const item of cart.items) {
-    const product = item.product;
-    const price = product.salePrice || product.regularPrice;
-    subtotal += price * item.itemQuantity;
+    // any বাদ, প্রপার টাইপ
+    const product = item.product as IProduct & Document;
+    if (!product || product.status !== "published") {
+      return {
+        error: {
+          cart: [`${product?.title || "প্রোডাক্ট"} এখন আর পাওয়া যাচ্ছে না`],
+        },
+      };
+    }
+
+    if (product.stockQuantity < item.itemQuantity) {
+      return {
+        error: {
+          cart: [`${product.title} স্টকে মাত্র ${product.stockQuantity}টি আছে`],
+        },
+      };
+    }
+
+    const unitPrice = product.salePrice || product.regularPrice;
+    subtotal += unitPrice * item.itemQuantity;
 
     orderItems.push({
       product: product._id,
-      variant: item.variant,
       productTitle: product.title,
       productSlug: product.slug,
-      productImage: product.images[0]?.url || product.thumbnail,
-      unitPrice: price,
+      productImage: product.thumbnail,
+      unitPrice,
       itemQuantity: item.itemQuantity,
       productSku: product.sku,
     });
   }
 
-  const shippingCost = validated.data.deliveryArea === "dhaka" ? 60 : 120;
+  const shippingCost = subtotal >= 1000 ? 0 : 60;
   const total = subtotal + shippingCost;
 
   const orderNumber = generateOrderNumber();
-  const newOrder = new Order({
+
+  const shippingName = data.isGift && data.receiverName ? data.receiverName : data.name;
+  const shippingPhone = data.isGift && data.receiverPhone ? data.receiverPhone : data.phone;
+
+  const order = await Order.create({
     orderNumber,
-    user: session?.user?.id || undefined,
+    user: userId || undefined,
+    customerPhone: data.phone,
     items: orderItems,
     shipping: {
-      name: validated.data.name,
-      phone: validated.data.phone,
-      addressLine1: validated.data.addressLine1,
-      district: validated.data.district,
-      city: validated.data.district, // fallback to district for city
-      postalCode: validated.data.postalCode || "",
+      name: shippingName,
+      phone: shippingPhone,
+      addressLine1: data.addressLine1,
+      addressLine2: data.addressLine2,
+      city: data.city,
+      district: data.district,
+      postalCode: data.postalCode,
     },
-
     subtotal,
     shippingCost,
     discount: 0,
     total,
-    paymentMethod: validated.data.paymentMethod,
-    paymentStatus: validated.data.paymentMethod === "cod" ? "pending" : "paid", // Mark as paid if it's mobile for verification
-    transactionId: validated.data.transactionId,
-    senderNumber: validated.data.senderNumber,
-    paymentProvider: validated.data.paymentProvider,
+    paymentMethod: data.paymentMethod,
+    paymentStatus: "pending",
+    transactionId: data.transactionId,
     orderStatus: "pending",
-    customerNotes: validated.data.customerNotes,
+    customerNotes: data.customerNotes,
   });
 
-  await newOrder.save();
+  // Send Notifications
+  try {
+    await sendDiscordOrder(order);
+    
+    const telegramMsg = `🛍️ *New Order: ${orderNumber}*\n` +
+      `💰 Total: ৳${total}\n` +
+      `📞 Phone: ${data.phone}\n` +
+      `📍 District: ${data.district}\n` +
+      `📦 Items: ${orderItems.length}`;
+    await sendTelegramMessage(telegramMsg);
+  } catch (err) {
+    console.error("Failed to send order notifications:", err);
+  }
 
-  // Clear Cart
+  for (const item of cart.items) {
+    await Product.updateOne(
+      { _id: item.product },
+      { $inc: { stockQuantity: -item.itemQuantity } },
+    );
+  }
+
   await Cart.deleteOne({ _id: cart._id });
+  if (guestSessionId) cookieStore.delete("cart_session_id");
 
-  const headersList = await headers();
-  const clientIp =
-    headersList.get("x-real-ip") ||
-    headersList.get("x-forwarded-for")?.split(",")[0].trim() ||
-    "";
+  const fbCookies = await getFbCookies();
 
-  // Meta CAPI
   await sendMetaEvent({
     eventName: "Purchase",
-    eventID: crypto.randomUUID(), // Pixel এর সাথে deduplicate করার জন্য
-    sourceUrl: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success`,
+    eventID: order.orderNumber,
+    sourceUrl: `${process.env.NEXT_PUBLIC_APP_URL}/checkout`,
     userData: {
-      ph: [hashPhone(validated.data.phone)],
-      client_ip_address: clientIp,
-      client_user_agent: headersList.get("user-agent") || "",
-      fbp: cookieStore.get("_fbp")?.value,
-      fbc: cookieStore.get("_fbc")?.value,
+      email: session?.user?.email || undefined,
+      phone: data.phone,
+      fbp: fbCookies.fbp,
+      fbc: fbCookies.fbc,
+      ct: data.city,
+      st: data.district,
+      zp: data.postalCode,
+      country: "bd",
     },
     customData: {
       value: total,
       currency: "BDT",
-      content_ids: orderItems.map((i) => i.productSku || i.product.toString()),
+      content_ids: orderItems.map((i) => i.productSku),
       content_type: "product",
       num_items: orderItems.reduce((sum, i) => sum + i.itemQuantity, 0),
+      order_id: orderNumber,
     },
   });
 
-  // Notifications
-  await sendDiscordOrder(newOrder.toObject());
-  await sendTelegramMessage(
-    `🛍️ *New Order: ${orderNumber}*\n\n💰 *Total:* ৳${total}\n📞 *Phone:* ${validated.data.phone}`,
-  );
-
-  revalidatePath("/admin/orders");
-  revalidatePath("/dashboard/my-orders");
-
+  revalidatePath("/dashboard/orders");
   return { orderNumber };
 }
 
 export async function updateOrderStatus(orderId: string, status: string) {
-  const session = await auth();
-  // Basic admin check (could be refined)
-  if (!session?.user) return { error: "Unauthorized" };
+  const session = await auth(); // এখানেও auth()
+  if (!session?.user || session.user.role !== "admin") {
+    return { error: "Unauthorized" };
+  }
 
   await dbConnect();
   const order = await Order.findById(orderId);
@@ -177,7 +222,7 @@ export async function updateOrderStatus(orderId: string, status: string) {
 
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
-  revalidatePath("/dashboard"); // Revalidate user dashboard too
+  revalidatePath("/dashboard");
 
   return { success: true };
 }
