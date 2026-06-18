@@ -1,3 +1,5 @@
+
+import { Analytics } from "@vercel/analytics/next"
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Noto_Sans_Bengali} from "next/font/google";
 import "@/styles/globals.css";
@@ -167,6 +169,7 @@ export default function RootLayout({
           {children}
           <ToastProvider />
         </Providers>
+         <Analytics />
       </body>
     </html>
   );
