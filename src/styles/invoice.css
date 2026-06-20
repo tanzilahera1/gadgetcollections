@@ -1,5 +1,26 @@
 /* src/styles/invoice.css */
 
+/* ========== OVERRIDE globals.css ========== */
+.invoice-page header,
+.invoice-page .invoice-header,
+.invoice-page nav,
+.invoice-page [role="navigation"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.invoice-page button {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
 @page {
   size: 148mm 210mm;
   margin: 0;
@@ -9,31 +30,119 @@ html, body {
   background: white;
 }
 
-/* ============================================
-   Screen Preview
-   ============================================ */
+/* ========== Screen Preview ========== */
 .invoice-page {
+  position: relative;
   width: 148mm;
   min-height: 210mm;
   padding: 5mm;
   margin: 20px auto;
-  background: white;
-  color: #000;
+  background: white !important;
+  color: #000 !important;
   font-family: var(--font-noto-serif-bengali), serif;
   font-size: 11px;
   line-height: 1.4;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.08);
   box-sizing: border-box;
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
 }
 
-/* ============================================
-   PRINT
-   ============================================ */
+.invoice-page * {
+  color: #000 !important;
+}
+
+.invoice-content {
+  flex: 1;
+}
+
+/* ========== INVOICE NUMBER — top-left corner ========== */
+.invoice-no-top {
+  position: absolute;
+  top: 2mm;
+  left: 2mm;
+  font-size: 10px;
+  font-weight: 700;
+  color: #000 !important;
+  background: transparent;
+  padding: 1px 4px;
+  z-index: 5;
+  letter-spacing: 0.3px;
+}
+
+.invoice-no-top .invoice-no-label {
+  color: #666 !important;
+  font-weight: 600;
+  font-size: 9px;
+}
+
+/* ========== QR CODE — top-right corner ========== */
+.invoice-qr {
+  position: absolute;
+  top: 2mm;
+  right: 2mm;
+  width: 20mm;
+  height: auto;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+.invoice-qr svg {
+  width: 20mm !important;
+  height: 20mm !important;
+  display: block;
+}
+
+.invoice-qr-label {
+  font-size: 7px;
+  font-weight: 700;
+  color: #002060 !important;
+  text-align: center;
+  letter-spacing: 0.3px;
+  line-height: 1;
+  margin-top: 3px;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+/* ========== WATERMARK ========== */
+.invoice-watermark {
+  position: absolute;
+  top: 80%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 74mm;
+  height: 74mm;
+  opacity: 0.08;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+.invoice-page > *:not(.invoice-watermark):not(.invoice-no-top):not(.invoice-qr) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ========== PRINT ========== */
 @media print {
   * {
     margin: 0 !important;
     padding: 0 !important;
     box-sizing: border-box !important;
+    color: #000 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
   }
 
   html, body {
@@ -59,21 +168,68 @@ html, body {
     bottom: 0 !important;
     width: 148mm !important;
     height: 210mm !important;
-    min-height: unset !important;
-    max-height: 210mm !important;
     margin: 0 !important;
     padding: 5mm !important;
     box-shadow: none !important;
-    outline: none !important;
-    border: none !important;
     background: white !important;
     overflow: hidden !important;
-    display: block !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .invoice-content {
+    flex: 1 !important;
+  }
+
+  /* Invoice number stay at top-left */
+  .invoice-no-top {
+    position: absolute !important;
+    top: 2mm !important;
+    left: 2mm !important;
+    padding: 1px 4px !important;
+    margin: 0 !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+  }
+
+  .invoice-no-top .invoice-no-label {
+    color: #666 !important;
+    font-size: 9px !important;
+  }
+
+  /* ✅ QR Code position stay */
+  .invoice-qr {
+    position: absolute !important;
+    top: 2mm !important;
+    right: 2mm !important;
+    width: 20mm !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .invoice-qr svg {
+    width: 20mm !important;
+    height: 20mm !important;
+  }
+
+  .invoice-qr-label {
+    font-size: 7px !important;
+    color: #002060 !important;
+    margin-top: 3px !important;
   }
 
   .invoice-page > *:first-child {
     margin-top: 0 !important;
     padding-top: 0 !important;
+  }
+
+  .invoice-watermark {
+    opacity: 0.08 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .no-print { display: none !important; }
@@ -90,49 +246,28 @@ html, body {
     print-color-adjust: exact !important;
   }
 
-  .invoice-number {
-    margin: 6px 0 6px !important;
+  /* ✅ Brand color — solid #002060, B&W print-এও visible */
+  .invoice-store-name,
+  .invoice-footer-thanks {
+    color: #002060 !important;
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    background-clip: unset !important;
+    -webkit-text-fill-color: #002060 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
-  .invoice-info-grid {
-    padding: 6px 0 !important;
-    margin-bottom: 6px !important;
-  }
-
-  .invoice-info-col {
-    padding: 0 6px !important;
-  }
-
-  .invoice-section-title {
-    margin: 0 0 4px !important;
-  }
-
-  .invoice-info-row {
-    margin-bottom: 2px !important;
-  }
-
-  .invoice-table th,
-  .invoice-table td {
-    padding: 4px 6px !important;
-  }
-
-  .invoice-table {
-    margin-top: 4px !important;
-  }
-
-  .invoice-words {
-    margin-top: 6px !important;
-  }
-
-  .invoice-footer-note {
-    margin-top: 10px !important;
-    padding-top: 4px !important;
-  }
+  .invoice-info-grid { padding: 6px 0 !important; margin-bottom: 6px !important; }
+  .invoice-info-col { padding: 0 6px !important; }
+  .invoice-section-title { margin: 0 0 4px !important; }
+  .invoice-info-row { margin-bottom: 2px !important; }
+  .invoice-table th, .invoice-table td { padding: 4px 6px !important; }
+  .invoice-table { margin-top: 4px !important; }
+  .invoice-words { margin-top: 6px !important; }
 }
 
-/* ============================================
-   Toolbar
-   ============================================ */
+/* ========== Toolbar ========== */
 .invoice-toolbar {
   max-width: 148mm;
   margin: 16px auto 4px;
@@ -144,7 +279,7 @@ html, body {
 
 .invoice-toolbar button {
   padding: 8px 16px;
-  border: 1px solid #ddd;
+  border: 1px solid #ddd !important;
   background: #fff;
   border-radius: 6px;
   cursor: pointer;
@@ -154,27 +289,18 @@ html, body {
 
 .invoice-toolbar button.primary {
   background: #000;
-  color: #fff;
-  border-color: #000;
+  color: #fff !important;
+  border-color: #000 !important;
 }
 
-/* ============================================
-   HEADER — fully transparent (both screen + print)
-   ============================================ */
-.invoice-header,
-.invoice-header *,
-.invoice-header-text,
-.invoice-header-text * {
-  background: transparent !important;        /* ✅ screen + print দুটোতেই */
-  background-color: transparent !important;
-}
-
+/* ========== HEADER ========== */
 .invoice-header {
-  position: relative;
-  text-align: center;
-  margin: 0;
-  padding: 0;
-  min-height: 64px;
+  position: relative !important;
+  text-align: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 64px !important;
+  background: transparent !important;
 }
 
 .invoice-logo {
@@ -184,43 +310,79 @@ html, body {
   width: 64px;
   height: 64px;
   object-fit: contain;
+  display: block;
 }
 
 .invoice-header-text {
   text-align: center;
   padding-top: 4px;
+  background: transparent !important;
 }
 
+/* ✅ Brand Name — solid color */
 .invoice-store-name {
-  font-size: 20px;
-  font-weight: 800;
+  font-size: 22px;
+  font-weight: 900;
   letter-spacing: 0.3px;
   margin: 0 0 3px;
   line-height: 1.1;
+  color: #002060 !important;
+}
+
+.invoice-page .invoice-store-name {
+  color: #002060 !important;
 }
 
 .invoice-store-address {
   font-size: 10px;
-  margin: 0;                       /* ✅ margin reset */
-  line-height: 1.6;                /* ✅ আগে 1.35 ছিল, এখন আরো বেশি */
+  margin: 0;
+  line-height: 1.6;
 }
 
-.invoice-number {
-  text-align: right;
-  font-size: 11px;
-  font-weight: 700;
-  margin: 8px 0 8px;
+.invoice-store-contact {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 10px;
+  line-height: 1.6;
+  flex-wrap: wrap;
 }
 
-/* ============================================
-   INFO GRID
-   ============================================ */
+.invoice-store-contact .contact-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.invoice-store-contact .icon-phone {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
+}
+
+.invoice-store-contact .icon-wa {
+  width: 11px;
+  height: 11px;
+  color: #25D366 !important;
+  flex-shrink: 0;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+.invoice-store-contact .icon-wa * {
+  color: #25D366 !important;
+  fill: #25D366 !important;
+}
+
+/* ========== INFO GRID ========== */
 .invoice-info-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   padding: 6px 0;
   gap: 14px;
   margin-bottom: 8px;
+  margin-top: 8px;
 }
 
 .invoice-info-col {
@@ -255,9 +417,7 @@ html, body {
   font-weight: 700;
 }
 
-/* ============================================
-   ITEMS TABLE
-   ============================================ */
+/* ========== ITEMS TABLE ========== */
 .invoice-table {
   width: 100%;
   border-collapse: collapse;
@@ -288,20 +448,82 @@ html, body {
 .summary-value { text-align: right; }
 .payable-row { font-weight: 800; }
 
-/* ============================================
-   WORDS & FOOTER
-   ============================================ */
+/* ========== WORDS ========== */
 .invoice-words {
   margin: 8px 0 0;
   font-size: 10.3px;
   font-style: italic;
 }
 
-.invoice-footer-note {
-  margin-top: 12px;
-  font-size: 9px;
+.invoice-customer-note {
+  margin-top: 8px;
+  font-size: 9.5px;
+  color: #555 !important;
   text-align: center;
-  color: #555;
   border-top: 1px dashed #999;
   padding-top: 5px;
+}
+
+/* ========== FOOTER ========== */
+.invoice-footer {
+  margin-top: 12px;
+  text-align: center;
+  padding-top: 6px;
+  border-top: 1.5px solid #000;
+}
+
+/* ✅ Thank you — solid color */
+.invoice-footer-thanks {
+  font-size: 12px;
+  font-weight: 800;
+  color: #002060 !important;
+  margin: 0 0 2px;
+}
+
+.invoice-page .invoice-footer-thanks {
+  color: #002060 !important;
+}
+
+.invoice-footer-subtitle {
+  font-size: 9.5px;
+  color: #444 !important;
+  margin: 0 0 8px;
+  font-style: italic;
+}
+
+/* Footer links — clean, no BG */
+.invoice-footer-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 9.5px;
+  font-weight: 600;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.invoice-footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #000 !important;
+  text-decoration: none;
+}
+
+.invoice-footer-link svg {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
+  color: #000 !important;
+}
+
+.invoice-footer-link svg * {
+  fill: #000 !important;
+  color: #000 !important;
+}
+
+.invoice-footer-divider {
+  color: #999 !important;
+  font-weight: 400;
 }

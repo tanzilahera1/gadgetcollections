@@ -17,6 +17,8 @@ import { sendTelegramMessage } from "@/lib/telegram";
 import { DELIVERY_CHARGES } from "@/lib/delivery-charges";
 import { buildInvoiceText } from "@/lib/invoice-formatter";
 
+import { generateInvoiceNumber } from "@/lib/invoice-number";
+
 const CreateOrderSchema = z
   .object({
     name: z.string().min(3, "নাম কমপক্ষে 3 অক্ষর"),
@@ -51,14 +53,7 @@ const CreateOrderSchema = z
     },
   );
 
-function generateOrderNumber(): string {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const random = Math.floor(Math.random() * 9000) + 1000;
-  return `ORD-${year}${month}${day}-${random}`;
-}
+
 
 export async function createOrder(formData: FormData) {
   const session = await auth();
@@ -142,7 +137,7 @@ export async function createOrder(formData: FormData) {
   const shippingCost = DELIVERY_CHARGES[data.deliveryArea];
   const total = subtotal + shippingCost;
 
-  const orderNumber = generateOrderNumber();
+  const orderNumber = await generateInvoiceNumber();
 
   const shippingName =
     data.isGift && data.receiverName ? data.receiverName : data.name;
