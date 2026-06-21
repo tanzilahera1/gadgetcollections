@@ -75,7 +75,7 @@ export function ProductActions({
     if (isInCart) {
       toast.info("ইতিমধ্যে এই প্রোডাক্ট কার্টে যোগ করা হয়েছে।", {
         icon: <ShoppingCart className="size-4" />,
-        duration: 1000,
+        duration: 1500,
       });
       return;
     }
@@ -87,7 +87,7 @@ export function ProductActions({
           if (data?.success) {
             toast.success(`${productTitle} কার্টে যোগ করা হয়েছে!`, {
               icon: <ShoppingCart className="size-4" />,
-              duration: 1000,
+              duration: 1500,
               action: {
                 label: "চেকআউট",
                 onClick: () => router.push("/cart"),

@@ -11,6 +11,7 @@ export function ToastProvider() {
       visibleToasts={1}
       expand={false}
       toastOptions={{
+        duration: 1500,
         className:
           "bg-background/80 backdrop-blur-xl border border-border/50 text-foreground shadow-2xl rounded-2xl",
       }}

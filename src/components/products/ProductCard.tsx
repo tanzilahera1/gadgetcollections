@@ -24,7 +24,7 @@ export default function ProductCard({ product }: { product: IProduct }) {
     addToCart,
     updateQty,
     removeItem,
-    isAdding,
+    isAdding, 
     isUpdating,
     isRemoving,
   } = useCart();
@@ -85,7 +85,7 @@ export default function ProductCard({ product }: { product: IProduct }) {
           if (data?.success) {
             toast.success(`${product.title} কার্টে যোগ করা হয়েছে!`, {
               icon: <ShoppingCart className="size-4" />,
-              duration: 1000,
+              duration: 1500,
             });
           }
         },

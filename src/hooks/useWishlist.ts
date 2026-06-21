@@ -48,7 +48,9 @@ export function useWishlist() {
         }
         queryClient.invalidateQueries({ queryKey: ['wishlist-items'] }); // Rollback optimistic update
       } else {
-        toast.success(data.isAdded ? "উইশলিস্টে যোগ করা হয়েছে!" : "উইশলিস্ট থেকে সরানো হয়েছে!");
+        toast.success(data.isAdded ? "উইশলিস্টে যোগ করা হয়েছে!" : "উইশলিস্ট থেকে সরানো হয়েছে!", {
+          duration: 1500,
+        });
       }
     },
     onSettled: () => {

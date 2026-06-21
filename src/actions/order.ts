@@ -38,7 +38,7 @@ const CreateOrderSchema = z
     transactionId: z.string().optional(),
     customerNotes: z.string().optional(),
   })
-  .refine(
+  .refine( 
     (data) => {
       if (data.paymentMethod === "mobile") {
         return (

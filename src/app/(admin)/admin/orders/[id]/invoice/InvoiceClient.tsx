@@ -7,7 +7,7 @@ import {
   FacebookIcon,
 } from "@/socialCustomSVGIcon/SocialCustomSVGIcon";
 import { Phone } from "lucide-react";
-import { useMemo } from "react";
+
 
 import "@/styles/invoice.css";
 import { InvoiceQR } from "@/components/admin/InvoiceQR";
@@ -20,26 +20,6 @@ function nWords(n: number): string {
   return n.toLocaleString("bn-BD");
 }
 
-/**
- * ✅ Invoice number = আজকের তারিখ (DDMMYY) + Order ID-এর শেষের 4 digit
- *
- * Order ID: ORD-261225-9353 → শেষের 4 digit = 9353
- * আজকের তারিখ: 26 Dec 2025 → 261225
- * Result: "2612259353"
- *
- * 🔁 Deterministic: একই order একই দিনে print করলে সবসময় একই invoice number
- */
-function generateInvoiceNumber(orderNumber: string): string {
-  const now = new Date();
-  const dd = String(now.getDate()).padStart(2, "0");
-  const mm = String(now.getMonth() + 1).padStart(2, "0");
-  const yy = String(now.getFullYear()).slice(-2);
-
-  const match = orderNumber.match(/(\d{4})$/);
-  const last4 = match ? match[1] : "0000";
-
-  return `${dd}${mm}${yy}${last4}`;
-}
 
 export function InvoiceClient({ order }: Props) {
   const dateStr = new Date(order.createdAt).toLocaleString("en-GB", {
@@ -64,11 +44,8 @@ export function InvoiceClient({ order }: Props) {
     (shipping.city ? `, ${shipping.city}` : "") +
     (shipping.postalCode ? ` - ${shipping.postalCode}` : "");
 
-  // ✅ Deterministic invoice number
-  const invoiceNo = useMemo(
-    () => generateInvoiceNumber(order.orderNumber),
-    [order.orderNumber],
-  );
+  // ✅ Deterministic invoice number (remove GC prefix)
+  const invoiceNo = order.orderNumber.replace(/^GC/i, "");
 
   return (
     <>
